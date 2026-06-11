@@ -8,6 +8,7 @@ This project is intended to create an observability and control application to f
 
 - [Project Layout](#project-layout)
 - [Documentation](#documentation)
+- [Scripts](#scripts)
 - [Setup](#setup)
 - [Docker — Full Stack](#docker--full-stack)
 - [Running Tests](#running-tests)
@@ -49,6 +50,8 @@ pykesys-redfish/
 
 ## Documentation
 
+### Project docs
+
 | Document | Description |
 |----------|-------------|
 | [docs/architecture.md](docs/architecture.md) | Full system architecture — component diagrams, data flow, deployment topologies, security |
@@ -56,11 +59,52 @@ pykesys-redfish/
 | [docs/sdk.md](docs/sdk.md) | SDK API reference — RedfishClient, resource classes, exceptions, examples |
 | [docs/cli.md](docs/cli.md) | `rf` CLI command reference — all subcommands with examples |
 | [docs/fleet.md](docs/fleet.md) | Fleet automation guide — FleetManager API, bulk ops, CSV/JSON export |
+| [docs/emulator.md](docs/emulator.md) | Emulator guide — architecture, node defaults, Redfish coverage, Sim API, scenarios |
 | [docs/guide-users.md](docs/guide-users.md) | User guide — curl-based operations, Python scripting patterns |
 | [docs/guide-admin.md](docs/guide-admin.md) | Admin guide — BMC hardening, LDAP, TLS, firmware lifecycle |
-| [docs/emulator.md](docs/emulator.md) | Emulator guide — Docker setup, Sim control API, scenarios, integration tests |
 | [docs/project-plan-sdk.md](docs/project-plan-sdk.md) | SDK project plan — v0.1 delivered + milestones v0.2–v0.5 |
 | [docs/project-plan-web.md](docs/project-plan-web.md) | Web app project plan — v0.1 delivered + milestones v0.2–v0.5 |
+
+### Scripts docs
+
+| Document | Description |
+|----------|-------------|
+| [docs/scripts.md](docs/scripts.md) | Scripts overview — which script to use and when |
+| [docs/run-sh.md](docs/run-sh.md) | `run.sh` — production gunicorn startup |
+| [docs/run-dashboard-sh.md](docs/run-dashboard-sh.md) | `run-dashboard.sh` — interactive development launcher |
+| [docs/run-tests-local-sh.md](docs/run-tests-local-sh.md) | `run_tests_local.sh` — local test runner |
+| [docs/runtests-sh.md](docs/runtests-sh.md) | `runtests.sh` — CI full-suite runner |
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+## Scripts
+
+Four shell scripts handle everything from day-to-day development to CI:
+
+| Script | Purpose |
+|--------|---------|
+| `./run.sh` | Start Django via gunicorn (production/staging) |
+| `./run-dashboard.sh` | Interactive menu — services, tests, Docker, Django shell |
+| `./run_tests_local.sh` | Run SDK / Django / integration tests locally |
+| `./runtests.sh` | Run all three suites in sequence (CI / pre-push) |
+
+```bash
+# Start all three services in background
+./run-dashboard.sh all
+
+# Run SDK unit tests only
+./run_tests_local.sh sdk
+
+# Rerun only failed tests
+./run_tests_local.sh --failed
+
+# Full CI suite
+./runtests.sh
+```
+
+See [docs/scripts.md](docs/scripts.md) for the full reference and individual man pages.
 
 [↑ Back to Top](#table-of-contents)
 
