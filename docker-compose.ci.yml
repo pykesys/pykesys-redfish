@@ -1,0 +1,28 @@
+# CI compose — emulator only + integration test runner.
+# Usage: docker compose -f docker-compose.ci.yml up --abort-on-container-exit --exit-code-from tests
+
+services:
+
+  emulator:
+    build: ./emulator
+    environment:
+      ADMIN_USER: admin
+      ADMIN_PASS: redfish
+      NUM_NODES: "10"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8888/healthz')"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      EMULATOR_URL: "http://emulator:8888"
+    depends_on:
+      emulator:
+        condition: service_healthy
+    command: ["python", "-m", "pytest", "tests/integration/", "-v", "--tb=short"]

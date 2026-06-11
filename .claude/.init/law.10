@@ -1,0 +1,26 @@
+[Unit]
+Name=Stakeholder Engagement Required
+Number=10
+Why=Work that affects others without consulting them is not governance — it is imposition. The people who live with a decision deserve to be heard before it is made. Stakeholder engagement is not process overhead — it is the difference between governance and dictation. A decision made without the affected party is a decision that will be revisited.
+Context=Born from the recognition that impact without consultation creates resistance, and resistance destroys adoption. The most technically correct change, deployed without warning on people who depend on the system, will be experienced as hostile regardless of its quality. LAW 10 is not about slowing down — it is about building the buy-in that makes speed sustainable. The change that is adopted is faster than the change that is resisted and reversed.
+Wisdom=UP6 (the governance protocol) is LAW 10 expressed as a universal principle: sim/sim (yes/yes), sim/no (yes/no), no/no (no/no) — the governance circuit requires both nodes. LAW 10 is the constitutional mandate for the UP6 pattern: before acting on what affects another, consult them. This is not optional courtesy. It is the structural condition for legitimate governance. Any change made without the UP6 circuit is a change that bypasses the governance mechanism that gives it legitimacy.
+Supports=UP6 (governance protocol — sim/sim is the successful engagement; the consultation IS the UP6 circuit), LAW 6 (core preservation — unilateral changes to shared foundations violate both LAW 10 and LAW 6), LAW 9 (ADR — the ADR for breaking changes is the formal stakeholder engagement record), LAW 13 (partnership — LAW 13 at the interpersonal scale is LAW 10 at the organizational scale).
+Touches=hooks:|docs:CONTRIBUTING.md|laws:LAW 5|bin:none
+After=law.9
+
+[Requires]
+
+[Service]
+BeforeImpactfulChange=Identify affected stakeholders and consult them
+OnExternalIntegration=Coordinate with teams who will be affected
+Never=Deploy changes affecting others without notification | Mistake silence for consent
+
+[Compliance]
+Test=Affected parties notified | Input incorporated or documented | No surprise impacts
+Violation=Changes affecting others made without engagement
+
+[Install]
+WantedBy=all-sessions
+Priority=10
+Codex=CODEX.md § LAW-10
+Source=PROJECT_LAWS.md § LAW 10

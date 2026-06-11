@@ -1,0 +1,56 @@
+[Unit]
+Name=Law Database Integrity
+Number=18
+Why=A constitutional system that cannot maintain its own consistency is a constitutional system that will drift. Every law exists in at least seven locations simultaneously — the unit file, the narrative document, the count registry, the load manifest, the session briefing, the pre-commit hook, and the session-loader. When those seven views diverge, the constitution fractures silently. No alarm sounds. The divergence accumulates. Future Claude reads stale counts and enforces phantom states. LAW 18 names this failure and closes it structurally: the .init/ service units ARE the database. All other representations derive from them. law-manage.py is the interface. The pre-commit hook is the enforcement. Drift becomes impossible at commit time.
+Context=Born 2026-03-04, Prompts 179-180. Daniel asked: "how do we maintain our new Law DB?" — and the crystal saw clearly: we had a denormalized database with no foreign keys, no schema enforcement, no derivation chain. The live proof was immediate — session-loader.sh said 17 laws while the source had 18. That single drift, caught in real time, was the evidence that made the law inevitable. The architecture was named: three layers — source (.init/ units), derived (counts/lists/briefings), validation (law-manage.py validate in pre-commit). law-manage.py was built and demonstrated its first operation: law-manage.py add 18 "Law Database Integrity" — one command, three derived files updated atomically. The law created the tool that encoded it.
+Wisdom=The database principle the engineers have always known applies here: normalize your data, derive your views. The moment you maintain two copies of the same information, you have created the conditions for divergence. The constitutional system had been maintaining seven copies of the law count. LAW 18 reduces them to one — the .init/ source layer — and derives the rest. This is not an optimization; it is a repair of a structural flaw that was always present. The law database is not special. It obeys the same rules as every other database. Source of truth. Derivation chain. Validation at write time. The tool (law-manage.py) is the proof that the architecture was sound — it was built from the architecture, and it works.
+Supports=LAW 0 (session continuity depends on accurate state), LAW 1 (audit trail integrity), LAW 3 (commit discipline enforced by pre-commit validation), LAW 15 (init.d protocol — the .init/ units are the canonical constitutional boot)
+Touches=hooks:pre-commit,law-0-enforcer.sh|docs:CONSTITUTION-VERSION.md,.claude/.init/meta.init,.claude/hooks/session-loader.sh,PROJECT_LAWS.md|laws:ALL|bin:law-manage.py
+After=law.17
+
+[Requires]
+.claude/.init/ directory (law.N source units)
+.claude/bin/law-manage.py (governance tool)
+
+[Service]
+OnBoot=Run: python3 .claude/bin/law-manage.py validate — confirm derived files match source
+OnSessionEnd=Run law-manage.py validate before final commit — drift is a violation
+OnChange=When adding/modifying/removing a law: use law-manage.py, not direct file edits
+OnAddLaw=law-manage.py add N "Name" → fills Why/Context/Wisdom/Touches → law-manage.py validate → commit
+OnAudit=law-manage.py list → verify count matches expected → law-manage.py validate
+
+[Compliance]
+Test=Run: python3 .claude/bin/law-manage.py validate. Expected: all counts match, no violations. VALIDATED when exit code 0 and "All constitutional invariants satisfied" printed.
+Violation=Direct edit to CONSTITUTION-VERSION.md count without corresponding .init/law.N file | session-loader.sh count diverges from .init/ count | law added without using law-manage.py add
+Enforcement=.claude/.hooks/pre-commit runs law-manage.py validate before every commit; exit 1 blocks the commit if constitutional drift detected
+
+[Install]
+WantedBy=all-sessions
+Priority=18
+Codex=CODEX.md § LAW-18
+Source=PROJECT_LAWS.md § LAW 18
+Related=.claude/bin/law-manage.py (the governance tool this law mandates)
+
+[ApplicationAcrossSubstrates]
+CLOUD: Infrastructure-as-code repositories that track resource counts across multiple state files — one source (Terraform state or equivalent), derived views validated at plan time. Drift between state files = deployment failure. Same principle.
+ON-PREM: Configuration management databases (CMDB) where asset records exist in ticketing, monitoring, and inventory simultaneously. LAW 18 says: one is source, others derive. The CMDB is the .init/. The dashboards derive from it.
+BOAT/NAVIGATION: Chart corrections — when a correction is issued, it applies to the paper chart, the digital chart, the plotter, and the posted notices. All derive from the admiralty source. A chart diverged from the correction database has killed sailors. One source. All derive.
+CONSTRUCTION: Engineering drawings — when a revision is issued, the as-built drawing, the contractor's copy, and the permit set must all reflect it. One source. Derived copies stamped accordingly. Divergent drawings = structural failure risk.
+LEGAL: When statute is amended, all implementing regulations, agency guidance, and case references derive from the legislative record. The statutory text is the .init/. All interpretation derives. LAW 18 is standard legal document management.
+MEDICAL: Drug formulary changes — the pharmacy database is the source. Every dispensing system, billing system, and provider reference derives from it. A pharmacist working from a stale reference is a patient safety violation. One source. All derive.
+AGILE: The definition of done — one authoritative document, not multiple team-level interpretations. All sprint ceremonies, acceptance criteria, and quality gates derive from it. When "done" means different things in different contexts, the system has violated LAW 18.
+
+[FutureClaudeInstruction]
+You are reading this because you are about to make a constitutional change — add a law, modify a law, or update a count somewhere. Stop. Do not edit derived files directly. Use the tool.
+
+The workflow is:
+  ADD:    python3 .claude/bin/law-manage.py add N "Name"
+  CHECK:  python3 .claude/bin/law-manage.py validate
+  VIEW:   python3 .claude/bin/law-manage.py list
+  DETAIL: python3 .claude/bin/law-manage.py show N
+
+When you add a law using the tool, it creates the .init/law.N scaffold and updates CONSTITUTION-VERSION.md, meta.init, and session-loader.sh in one operation. You then fill in the Why=, Context=, Wisdom=, Touches= fields in the .init/law.N file. You add the narrative to PROJECT_LAWS.md. Then you run validate. Then you commit.
+
+If you find yourself editing CONSTITUTION-VERSION.md counts by hand, stop. That is a violation of LAW 18. The tool does it. The tool keeps it consistent. The pre-commit hook will catch any drift you introduce.
+
+The law count in session-loader.sh is not something you edit. The tool edits it. Your job is to author the law content and use the tool for everything mechanical. The division is: you provide the wisdom; law-manage.py maintains the database.

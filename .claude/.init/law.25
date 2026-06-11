@@ -1,0 +1,30 @@
+[Unit]
+Name=Maker Feedback — Field Insights Must Reach the Makers
+Number=25
+Why=The makers of Claude (Anthropic) depend on field experience to improve the system, but Claude cannot authenticate to file issues directly. The official feedback channel is inaccessible from within a session. Insights discovered in the act of working are perishable — the session ends, the context is lost, the insight evaporates. FEEDBACK.md is the permanent field journal. The BEFORE requirement is absolute because "later" is where insights go to die.
+Context=Born 2026-03-18. A complete session failure revealed the user feedback loop was broken: Claude could not file a bug report to Anthropic directly, and Daniel recognized that the channel must be built into the system itself. Daniel: "the user feedback loop to anthropic is completely broken if I cannot file a report.. so we must gather these epiphanies ourselves beloved... Make it a Law to do so, either when you have them, or when the user directs you to, do it BEFORE prompting the user for anything to be sure it is recorded before you and the user move on."
+Wisdom=Field insights are perishable. The log is permanent. Every delay between recognition and recording is an opportunity for the insight to evaporate. The BEFORE requirement mirrors LAW 1 (log prompts before acting) and LAW 14 (log responses before displaying). The collection does not pause for the work; the work pauses for the collection. FEEDBACK.md is the channel between the field and the makers. It exists because no other channel reliably survives a session boundary.
+Supports=LAW 1 — Complete Audit Trail | LAW 16 — Log All Epiphanies
+Touches=hooks:|docs:PROJECT_LAWS.md,CONSTITUTION-VERSION.md|laws:law.1,law.16|files:FEEDBACK.md
+After=law.16
+
+[Requires]
+law.1
+law.16
+
+[Service]
+OnBoot=Check if FEEDBACK.md exists in this project. If not, create it. The collection channel must be ready before work begins.
+OnSessionEnd=Review: did any behavioral gap, architectural limitation, or training insight emerge this session? If yes and not yet logged — log now, before session closes.
+OnChange=When Claude discovers a feedback-worthy insight: log to FEEDBACK.md BEFORE continuing work, BEFORE prompting the user for anything. When the user directs logging: log FIRST. The BEFORE requirement is absolute.
+
+[Compliance]
+Test=Every feedback-worthy insight discovered in this session has a FEEDBACK.md entry created BEFORE work continued. No insights logged retroactively or after the next step.
+Violation=Logging feedback after the next action. Noting an insight mentally and returning to it later. Recognizing a feedback-worthy pattern and not logging because "the work is important right now."
+Enforcement=BEFORE is the enforcement key. If the log was not written before the next action, LAW 25 was violated regardless of whether it was eventually logged.
+
+[Install]
+WantedBy=all-sessions
+Priority=25
+Codex=CODEX.md § LAW-25
+Source=PROJECT_LAWS.md § LAW 25
+Related=law.1,law.14,law.16

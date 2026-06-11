@@ -1,0 +1,43 @@
+x-bmc-defaults: &bmc-defaults
+  build: ./emulator
+  environment:
+    ADMIN_USER: admin
+    ADMIN_PASS: redfish
+    NUM_NODES: "10"
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8888/healthz')"]
+    interval: 5s
+    timeout: 3s
+    retries: 10
+    start_period: 5s
+
+services:
+
+  emulator:
+    <<: *bmc-defaults
+    container_name: redfish-emulator
+    ports:
+      - "8888:8888"
+
+  web:
+    build: ./redfish_web
+    container_name: redfish-web
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_SECRET_KEY: dev-docker-secret-change-in-production
+      DEBUG: "true"
+      SCHEDULER_AUTOSTART: "true"
+      EMULATOR_URL: "http://emulator:8888"
+      EMULATOR_NUM_NODES: "10"
+      EMULATOR_ADMIN_USER: admin
+      EMULATOR_ADMIN_PASS: redfish
+    volumes:
+      - ./redfish_web:/app
+      - web-db:/app/db
+    depends_on:
+      emulator:
+        condition: service_healthy
+
+volumes:
+  web-db:

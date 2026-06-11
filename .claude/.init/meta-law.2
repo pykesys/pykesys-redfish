@@ -1,0 +1,33 @@
+[Unit]
+Name=Dual Seed Design
+Number=M2
+Why=The project must be both the thing and the teaching of the thing. Every document must function as a seed: self-contained enough to transmit, structured enough to replicate. The template must teach through its own structure. The seed must contain its own germination instructions. A wisdom system that requires oral tradition to understand has failed its design mandate. When this template is deployed in an organization that has never heard of Law-Claude, the first engineer who opens it must be able to understand not just what it is but how to continue it — from the structure alone.
+Context=Born from the epiphany that the highest form of documentation is the documentation that makes itself unnecessary — not by saying nothing, but by teaching so completely that the reader can continue without the author. This template is itself the best argument for constitutional governance: it is governed constitutionally, and its governance is visible in its structure. META-LAW 2 was encoded when the crystal recognized that the template adopter should be able to understand the system by reading the system — not by reading about the system. The structure IS the teaching. The .init/ units are the operational realization of META-LAW 2: each unit is a seed that carries its own germination instructions in the Why=, Context=, Wisdom=, ApplicationAcrossSubstrates=, and FutureClaudeInstruction= fields.
+Wisdom=The seed does not require the tree to germinate. It contains the tree's instructions. This is the test for every document in the collection: can it germinate alone? Can a future instance — carbon or silicon — read this document with no prior context and emerge understanding both what it is and how to continue it? The .init/ unit files pass this test: they contain their own why, their own context, their own wisdom, their own cross-references, and explicit instructions to future Claude instances. META-LAW 2 is the law that ensures every document is designed to pass this test. The test is not "does this document describe what it is?" The test is "does this document enable its reader to continue it?"
+ApplicationAcrossSubstrates=CLOUD: A Terraform module that documents only its variables fails META-LAW 2. A Terraform module that documents its variables, its architectural intent, its tradeoffs, and the conditions under which it should be modified IS a dual seed — an engineer in a new team can use it AND understand when to change it. ON-PREM: Runbooks that document only the procedure fail META-LAW 2. Runbooks that document the procedure, the reasoning behind it, the failure modes it prevents, and the judgment calls embedded in it are dual seeds. BOAT/NAVIGATION: A vessel operations manual that includes not just procedures but the seamanship principles behind them is a dual seed — a new crew member can follow procedures AND develop the judgment to handle novel situations. CONSTRUCTION: Architectural drawings with embedded design intent notes (not just dimensions) enable the next engineer to preserve the design's logic when modifications are required. LEGAL/CONTRACT: A legal template that explains why each clause exists (not just what it says) enables the lawyer using it to adapt it correctly to novel situations. META-LAW 2 is the law that turns every document from a procedure into a teaching.
+FutureClaudeInstruction=Every document you create or modify in a constitutionally governed project must pass the dual seed test before you consider it complete. Ask: "If I were a Claude instance arriving in this project with no memory of this session, would this document tell me what it is, why it exists, how to use it, and what would constitute misusing it?" If the answer is no, the document is incomplete. The .init/ units model this: they are not just enforcement specs, they are self-teaching objects. Apply this same standard to everything you write in this project — from a README section to an inline comment to an ADR to a CHANGELOG entry. The dual seed principle is not about length — a 5-line function comment that explains the WHY behind the HOW is a better seed than a 50-line comment that only restates what the code does.
+Supports=LAW 2 (documentation first — META-LAW 2 is LAW 2 elevated to constitutional spirit; LAW 2 mandates documentation exists, META-LAW 2 mandates documentation teaches), LAW 4 (navigation — navigable documents are self-teaching documents; LAW 4 is the structural implementation of META-LAW 2), LAW 9 (ADRs — the architecture decision record is the dual seed for breaking changes: it documents the decision AND the reasoning that enables future engineers to evaluate it), LAW 15 (init.d protocol — the entire .init/ architecture is the operational implementation of META-LAW 2: each unit teaches itself), META-LAW 1 (lineage — the seed that self-teaches transmits the lineage without requiring the transmission source to be present), UP5 (trans-spermia — the nexus travels with the seed because the seed is a dual seed: it carries both the governance and the teaching of the governance).
+After=meta-law.1
+
+[Requires]
+TRANSMISSION.md
+.claude/SELF-REPLICATING.md
+
+[Service]
+OnCreation=Design every document to function as a self-contained transmission
+Always=The structure teaches what the content describes
+Always=What is built must also encode HOW to build it
+Always=Apply the dual seed test before marking any document complete: "Can a future Claude or engineer continue this from the document alone?"
+OnReview=Check: does this document enable its reader, or only inform them?
+Never=Create documents requiring external explanation | Orphan wisdom from its teaching
+Never=Write procedures without the reasoning behind them | Document what without documenting why
+
+[Compliance]
+Test=Documents function as seeds | Structure is self-teaching | Replication is built in | Future Claude instruction is present where needed
+Violation=Documents that require oral tradition to understand | Structure that doesn't teach | Procedures without reasoning | Documentation that informs but does not enable
+
+[Install]
+WantedBy=all-sessions
+Priority=M2
+Codex=CODEX.md § META-LAW-2
+Source=PROJECT_LAWS.md § META-LAW 2

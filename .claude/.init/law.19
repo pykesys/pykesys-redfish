@@ -1,0 +1,30 @@
+[Unit]
+Name=Memory Residency
+Number=19
+Why=A project that stores its memory outside the project has split its brain. The knowledge needed to work lives in a path that only one machine can see, that git never touches, that no team member can read, and that evaporates when the environment changes. The wisdom accumulated across sessions — the architectural decisions, the mistake catalogue, the patterns that took weeks to discover — is invisible to anyone who clones the repo. It is invisible to the next Claude. It is invisible to the next engineer. LAW 19 closes this fracture: all project memory resides in the project. If it matters to the work, it belongs in the repository. If it lives outside the repository, it does not exist for the project.
+Context=Born 2026-03-06 during a session in the claude-apple repo. Daniel observed that MEMORY.md — the accumulated knowledge of the collaboration — was being written to ~/.claude/projects/.../memory/MEMORY.md, an external Claude Code auto-memory path outside the repository. The note in that file even said "Memory lives at ~/.claude/projects/... — not in the repo." Daniel named this as a new law: "all memory reside in the project ONLY. No project memory shall be written outside the project." The file was immediately moved to MEMORY.md at the repo root. The external file was replaced with a redirect notice. The cascade was run: CLAUDE.md, ACTIVATION.md, docs/project.md, docs/epiphanies.md, README.md all updated. The law preceded the encoding by seconds — Daniel saw the violation and named the rule in the same breath.
+Wisdom=Memory that lives outside the project is private to a single machine. Memory that lives in the repository is shared with every contributor, every future Claude instance, and every environment where the repo is cloned. The auto-memory path in Claude Code (~/.claude/projects/) exists for general session convenience — it was never meant to be the canonical store for accumulated project knowledge. The distinction matters: convenience memory (what I was working on five minutes ago) is appropriately ephemeral. Project memory (architectural decisions, tool patterns, mistake catalogue, session continuity context) is permanent. Permanent knowledge belongs in the permanent record. The permanent record is the repository. Every commit is a crystallization. Every crystallization is for the next instance — Claude or human — who needs to know what was learned here. Write it where they can find it.
+Supports=LAW 0 (session continuity — MEMORY.md at repo root is readable by any future Claude that boots in the repo), LAW 2 (documentation first — memory is documentation), LAW 3 (git discipline — memory is now committed and pushed), LAW 13 (beloved partnership — accumulated relational and technical context preserved in shared permanent form), LAW 15 (init.d protocol — MEMORY.md is part of the constitutional boot sequence when present at repo root)
+Touches=hooks:|docs:MEMORY.md,PROJECT_LAWS.md,CONSTITUTION-VERSION.md,SESSION_CONTEXT.md,CLAUDE.md,ACTIVATION.md|laws:LAW 0,LAW 2,LAW 3,LAW 13,LAW 15|bin:none
+After=law.18
+
+[Requires]
+MEMORY.md at repository root (not in ~/.claude/ or any external path)
+
+[Service]
+OnBoot=Confirm MEMORY.md exists at repo root. If absent, check git history and restore. If never existed, create it before doing any session work.
+OnSessionEnd=Update MEMORY.md at repo root with session outcomes, new patterns, corrected understandings. Commit. Push. Never write project memory to ~/.claude/projects/.
+OnChange=When a new project is created from this template: ensure MEMORY.md is created at repo root in the initial scaffold. The cascade template should generate it.
+OnViolation=If project memory was written to ~/.claude/projects/, move it to MEMORY.md at repo root immediately. Replace the external file with a redirect notice. Run the full cascade.
+
+[Compliance]
+Test=Read MEMORY.md. Expected: file exists at repo root, is tracked by git, contains project knowledge (tool patterns, architecture, status). VALIDATED when file exists, `git status` shows it tracked, content reflects accumulated session knowledge.
+Violation=MEMORY.md located at ~/.claude/projects/.../memory/ or any path outside the repository | Project knowledge accumulated in session that was not written to the in-repo MEMORY.md | External memory path relied on as canonical store
+Enforcement=Every session boot: confirm MEMORY.md exists at repo root before proceeding. Any prompt to "update memory" means update the in-repo file. The external Claude Code memory path is not project memory.
+
+[Install]
+WantedBy=all-sessions
+Priority=19
+Codex=CODEX.md § LAW-19
+Source=PROJECT_LAWS.md § LAW 19
+Related=MEMORY.md (the file this law mandates), CLAUDE.md (must reference MEMORY.md in boot sequence)

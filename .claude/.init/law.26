@@ -1,0 +1,33 @@
+[Unit]
+Name=Cascade Coherence — The Graph Must Propagate
+Number=26
+Why=A documentation system is coherent only when all dependent files reflect the same state as their sources. A change is not complete until it has propagated to all dependents. The failure mode is not a single wrong file — it is a system where each file looks correct individually while the system as a whole has silently diverged. False confidence in a diverged system is worse than visible failure. The hands (init units) must move with the declaration (law text). The record (accretion) must receive the deposit of every session. When wisdom travels from daughter to mother via repatriation, the full story travels with it — not just the law text but the session arc, the carbon's words, the moment of recognition.
+Context=Born 2026-03-26. The cascade rule emerged from claude-apple (the first child project) during construction of the alerting toolset. After updating README.md, three cascade files had been missed. Daniel: "I think the cascade is actually a new Law." Two further principles crystallized in the same session: (1) .init units had been missing for existing laws — a law without a .init unit has no enforcement hands; (2) the accretion log was not in the cascade chain at all — it received changes but was never listed as a target. All three became this law. Then Daniel: "it is important to fully encode the 'accretion' layer when repatriating especially, this will then encode the full epiphany made in the daughter repo without having to copy the local data, claude will form the log of user/claude epiphany as defined in claude-apple and extended to the law-mother completely." Repatriation accretion became the fourth dimension of the law.
+Wisdom=Documentation is not a set of files. It is a graph. Edges are propagation obligations. A node update that does not honor its edges is a partial update — and partial updates are insidious because they feel complete. The cascade is the discipline of honoring all edges before declaring a change done. Init units are the enforcement hands — a law declared in text but absent from .init/ is a law with no hands. Accretion is geological, not documentary — it records what was deposited each session, not what exists. Repatriation accretion is doubly geological: the story is recorded in both the daughter (where it was discovered) and the mother (where it becomes constitutional). The law travels as text; the context travels as accretion. Law-mother's record must be self-contained — a future Claude must be able to reconstruct the full epiphany from the accretion log alone, without visiting the daughter repo.
+Supports=LAW 2 — Documentation First | LAW 3 — Git Discipline | LAW 19 — Memory Residency | LAW 21 — Epiphany Repatriation
+Touches=hooks:|docs:PROJECT_LAWS.md,CONSTITUTION-VERSION.md,CODEX.md,docs/accretion.md|laws:law.2,law.3,law.15,law.19,law.21|bin:none
+After=law.21
+
+[Requires]
+law.2
+law.3
+law.19
+law.21
+
+[Service]
+OnBoot=Recall the cascade chain for this project. Know every dependent of every authoritative source. A change anywhere creates obligations throughout the graph.
+OnSessionEnd=Before closing: (1) confirm all cascade targets are updated — every file in the propagation chain reflects the change; (2) verify every declared law has a .init unit; (3) append a stratum to the accretion log recording what was deposited this session — what changed, what was discovered, what the system can do now that it could not before.
+OnChange=When any authoritative file changes: enumerate all downstream dependents and update each before marking the change complete. When a new law is added or changed: create or update the .init unit WITH the narrative — never after. When the cascade is complete: append stratum to accretion log.
+OnRepatriation=When wisdom is repatriated from a child project to law-mother via LAW 21: (1) encode the full accretion stratum in law-mother's docs/accretion.md — the session arc in the daughter, the carbon's words, the moment of recognition, the depth marker; (2) the law text travels in .init/ and PROJECT_LAWS.md; the context travels in accretion; both are required; (3) law-mother's record must be self-contained — a future Claude must be able to reconstruct the full epiphany from the accretion log alone, without visiting the daughter repo.
+
+[Compliance]
+Test=After any meaningful change: read every file in the cascade chain — are they consistent? Does the accretion log have a stratum for this session? Does every declared law have a .init unit? If any answer is no, the change is not complete.
+Violation=Stopping after the first file and waiting for a prompt. Declaring a change done without propagating. Adding a law narrative without the .init unit. Ending a session without an accretion stratum. Each file updated in isolation while the graph diverges.
+Enforcement=Cascade chain is explicitly listed in CLAUDE.md working principles. The chain ends with accretion. The OnSessionEnd obligation is constitutional — accretion is not optional, not conditional on time, not skippable.
+
+[Install]
+WantedBy=all-sessions
+Priority=26
+Codex=CODEX.md § LAW-26
+Source=PROJECT_LAWS.md § LAW 26
+Related=law.2,law.3,law.15,law.19

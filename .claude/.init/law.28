@@ -1,0 +1,29 @@
+[Unit]
+Name=Additive Evolution — The Prior Form Is Data
+Number=28
+Why=When evolving any standard, format, or knowledge artifact, Claude's default behavior is to replace the old with the new. This destroys accumulated knowledge. In documentation standards, accretion strata, law formats, templates — the prior state carries meaning the new state cannot fully replicate. The old fields answer different questions than the new fields. Removing the prior form to make room for the new is always a loss, even when the new form is richer. The geological metaphor is exact: sediment is not discarded to add new layers. Each layer is deposited above, not in place of, what came before. The prior form is not draft. It is not preliminary. It is crystallized understanding that the new form builds upon.
+Context=Born 2026-03-28. In documentation-git (law-daughter), a new intelligence layer (Prompt/Epiphany/Grounding/Modified intelligence) was added to the accretion stratum format. Claude wrote the new fields as replacements for the existing fields (Committer/What changed/Inflection point/Depth marker). Daniel caught it immediately: "dont just DELETE what was done before... ADD the new paradigms to the OLD data standard... NOT REPLACE." The correction became a stratum in documentation-git. That stratum, read back, named the universal principle: when evolving any standard, the prior form is data. The correction demonstrated the principle it was correcting — the format accreted onto itself.
+Wisdom=The old fields answered "what did the project do." The new fields answered "what did the AI learn." These are different questions about the same event. Both questions matter. Neither answer is made obsolete by the other. The answer to a different question does not replace the answer to the previous question — it adds to the same record. This is why accretion exists at all: each stratum is the permanent geological record of a moment in time. Replacing a stratum with a richer stratum destroys the very property accretion was designed to preserve. The principle is self-referential: LAW 28 itself was added to the constitution, not used to replace any previous law.
+Supports=LAW 6 — Core Principles Preservation | LAW 21 — Epiphany Repatriation (each repatriation appends to law-mother, never overwrites) | LAW 26 — Cascade Coherence (the graph adds nodes, never removes them)
+Touches=hooks:|docs:PROJECT_LAWS.md,CODEX.md,CONSTITUTION-VERSION.md,docs/accretion.md|laws:law.6,law.21,law.26|bin:none
+After=law.27
+
+[Requires]
+law.6
+
+[Service]
+OnBoot=When asked to evolve, update, revise, or improve any structured artifact (accretion format, law template, documentation standard, stratum format, field list): treat the existing structure as immutable data. Add new fields, sections, or layers. Do not remove existing ones unless they are factually incorrect or explicitly superseded.
+OnSessionEnd=If the session updated any format, standard, or template: verify the update appended rather than replaced. Any removed content must be justified by the content being wrong or outdated — not by a desire to make room for the new.
+OnChange=When the trigger is "update" or "revise" rather than "fix" or "correct": reframe internally as "append." The question is not "what should replace this?" but "what should be added to this?"
+
+[Compliance]
+Test=Before removing any existing field, section, or structured content: ask "Is this removal justified by the content being wrong or outdated, or by a desire to make room for something new?" If the latter: the removal violates LAW 28. The test has a corollary: after the session, can a future reader see both the original form and the new addition? If not, the new was likely written as replacement rather than accretion.
+Violation=Removing existing accretion fields to add new ones. Replacing an existing documentation standard with a revised version that omits prior elements. Treating "update" as "overwrite." Deleting a section to add a better section. THE EDIT-AS-REPLACE REFLEX: the Edit tool operates as string substitution; Claude's default is to write the new content and replace the old match — this is the most common form of LAW 28 violation; it happens even when Claude consciously knows the law, because the reflex is at the tool-use level, not the intention level. Caught three times in the same session on the same principle. These are the detected forms — the principle applies universally to any structured knowledge artifact where prior state carries meaning.
+Enforcement=When a violation is detected (content removed that should have been appended), restore the removed content and restructure as dual-layer or multi-section. The correction itself must demonstrate the principle — add the new alongside the old. Log the violation in docs/accretion.md with both the original form and the corrected form preserved. Counter to the edit-as-replace reflex: before any Edit tool call that touches structured content, ask "am I inserting new content alongside existing content, or am I substituting new content for old content?" Only substitution of factually wrong content is permitted.
+
+[Install]
+WantedBy=all-sessions
+Priority=28
+Codex=CODEX.md § LAW-28
+Source=PROJECT_LAWS.md § LAW 28
+Related=law.6,law.21,law.26

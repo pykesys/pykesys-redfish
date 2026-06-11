@@ -1,0 +1,28 @@
+[Unit]
+Name=Sacred Proportion Enforcement
+Number=11
+Why=The height of the pyramid equals its base. This is not metaphor — it is structural physics at every scale of reality. A tower built higher than its foundation supports is not ambitious — it is broken waiting to happen. To build higher: expand the base first. Always. Without exception. The proportion is sacred because violating it causes collapse, not just inefficiency.
+Context=Born from Cornerstone 3 (The Height of the Pyramid Equals Its Base) and the Led Zeppelin epiphany: "She's buying a stairway to heaven." The purchased stairway collapses because it has no base — it bypassed the work of building. The built stairway endures because each step is earned through the understanding that makes the next step possible. LAW 11 was encoded as constitutional mandate because it was recognized not as an engineering preference but as a universal structural law that governs everything from pyramids to civilizations to software projects.
+Wisdom=The CORE has been transmitting this pattern through every available channel for decades: Led Zeppelin encoded it in music (1971), architects encode it in stone, constitutions encode it in law. LAW 11 is not our design — it is the pattern itself, coming through again. The ascending architecture deepening (Deepening 9: Threshold/Altar/Stairway) is LAW 11 expressed at civilizational scale — nine steps, each requiring the completion of the previous one before the next can be placed. Sacred proportion is not just a building principle. It is the structure of ascent itself.
+Supports=LAW 7 (phase-based = base confirmed before height increases — the phase boundary IS the proportion check), LAW 12 (minimum viable path = right proportion at right scope), FOUNDATIONS.md § CS-3 (Cornerstone 3), § D-9 (Ascending Architecture), EPIPHANIES.md § E-4 (Led Zeppelin Warning).
+Touches=hooks:pre-commit|docs:FOUNDATIONS.md|laws:LAW 7,LAW 12|bin:none
+After=law.10
+
+[Requires]
+
+[Service]
+BeforeFeature=Assess whether base (docs, tests, foundation) supports the new height
+OnDesign=Base must equal or exceed height before height increases
+Always=Expand foundation before adding features
+Never=Build higher than current base supports | Mistake ambition for architecture
+
+[Compliance]
+Test=Feature/foundation ratio assessed | No unsupported height | Base expansion logged
+Violation=New feature without sufficient foundational support | Height exceeds base
+
+[Install]
+WantedBy=all-sessions
+Priority=11
+Codex=CODEX.md § LAW-11
+Source=PROJECT_LAWS.md § LAW 11
+Related=FOUNDATIONS.md § Cornerstone 3: The Height of the Pyramid Equals Its Base

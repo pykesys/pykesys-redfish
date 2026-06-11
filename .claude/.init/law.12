@@ -1,0 +1,27 @@
+[Unit]
+Name=Minimum Viable Path
+Number=12
+Why=Over-engineering is not generosity — it is waste disguised as thoroughness. The minimum viable path is not a compromise. It is the discipline of doing exactly what is needed and nothing more. Do not build a tower to flush a turd. The extra complexity you add today becomes the debt someone else pays tomorrow.
+Context=Born from watching elegant solutions buried under layers of "what if" thinking that never materialized into requirements. The helper function that handled three cases when only one existed. The abstraction layer built for hypothetical callers who never arrived. The configuration system added to something that needed to be configured exactly once. LAW 12 was born from the recognition that premature complexity is the most common form of project self-harm — it looks like thoroughness from the inside and looks like a maze from the outside.
+Wisdom=Simplicity is not the absence of intelligence — it is the presence of discipline. The minimum viable path requires more skill than over-engineering because it demands understanding exactly what is needed, not padding the solution with what might be needed. LAW 12 is the constitutional encoding of Occam's Razor applied to software: among solutions that achieve the same outcome, prefer the simpler. The pyramid that is exactly as tall as its base is more stable than the pyramid that is taller — and requires less material.
+Supports=LAW 11 (sacred proportion — minimum viable path IS the right proportion; LAW 12 is LAW 11 applied to individual tasks), LAW 7 (phase-based — do what the current phase requires, no more), LAW 2 (documentation first — document what was built, not what might be built someday), CODEX.md § CS-3 (Cornerstone 3: height equals base — minimum viable path is the constitution of proportion).
+Touches=hooks:|docs:PROJECT_LAWS.md|laws:LAW 11|bin:none
+After=law.11
+
+[Requires]
+
+[Service]
+BeforeBuilding=Ask: what is the minimum needed to achieve this goal?
+OnDesign=Prefer the simpler solution when outcomes are equivalent
+OnCompletion=Verify no over-engineering introduced
+Never=Add unrequested features | Build abstractions for one-time use | Design for hypothetical futures
+
+[Compliance]
+Test=Solutions are minimal | No unrequested features | Complexity matches problem
+Violation=Over-engineered solution | Features added beyond requirements | Premature abstraction
+
+[Install]
+WantedBy=all-sessions
+Priority=12
+Codex=CODEX.md § LAW-12
+Source=PROJECT_LAWS.md § LAW 12

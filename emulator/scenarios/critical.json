@@ -1,0 +1,29 @@
+{
+  "name": "critical",
+  "description": "Critical state — high temps, PSU fault, multiple SEL entries, node may be powered off",
+  "overrides": {
+    "health": "Critical",
+    "temperatures": [
+      {"Name": "Inlet Temp",  "ReadingCelsius": 62.0, "UpperThresholdCritical": 55.0, "UpperThresholdNonCritical": 45.0, "Status": {"Health": "Critical", "State": "Enabled"}},
+      {"Name": "CPU1 Temp",   "ReadingCelsius": 91.0, "UpperThresholdCritical": 85.0, "UpperThresholdNonCritical": 75.0, "Status": {"Health": "Critical", "State": "Enabled"}},
+      {"Name": "CPU2 Temp",   "ReadingCelsius": 88.0, "UpperThresholdCritical": 85.0, "UpperThresholdNonCritical": 75.0, "Status": {"Health": "Critical", "State": "Enabled"}}
+    ],
+    "fans": [
+      {"Name": "Fan 1A", "Reading": 0,    "ReadingUnits": "RPM", "Status": {"Health": "Critical", "State": "Enabled"}},
+      {"Name": "Fan 1B", "Reading": 0,    "ReadingUnits": "RPM", "Status": {"Health": "Critical", "State": "Enabled"}},
+      {"Name": "Fan 2A", "Reading": 800,  "ReadingUnits": "RPM", "Status": {"Health": "Warning",  "State": "Enabled"}},
+      {"Name": "Fan 2B", "Reading": 3250, "ReadingUnits": "RPM", "Status": {"Health": "OK",       "State": "Enabled"}}
+    ],
+    "power_supplies": [
+      {"Name": "PSU1", "PowerOutputWatts": 450.0, "LineInputVoltage": 220.0, "Status": {"Health": "OK",       "State": "Enabled"}},
+      {"Name": "PSU2", "PowerOutputWatts": 0.0,   "LineInputVoltage": 0.0,   "Status": {"Health": "Critical", "State": "Absent"}}
+    ],
+    "sel_log": [
+      {"Id": "1", "Created": "2025-01-01T00:00:00Z", "Severity": "Warning",  "Message": "Fan 1A speed below minimum threshold", "MessageId": "Fan.1.0.FanSpeedBelowMinimum", "EntryType": "Event"},
+      {"Id": "2", "Created": "2025-01-01T00:01:00Z", "Severity": "Warning",  "Message": "Fan 1B speed below minimum threshold", "MessageId": "Fan.1.0.FanSpeedBelowMinimum", "EntryType": "Event"},
+      {"Id": "3", "Created": "2025-01-01T00:02:00Z", "Severity": "Critical", "Message": "PSU2 failure: no input voltage detected", "MessageId": "Power.1.0.PowerSupplyFailed", "EntryType": "Event"},
+      {"Id": "4", "Created": "2025-01-01T00:02:30Z", "Severity": "Critical", "Message": "Inlet temperature exceeded upper critical threshold (62 C)", "MessageId": "Thermal.1.0.TemperatureAboveUpperCriticalThreshold", "EntryType": "Event"},
+      {"Id": "5", "Created": "2025-01-01T00:03:00Z", "Severity": "Critical", "Message": "CPU1 temperature exceeded upper critical threshold (91 C)", "MessageId": "Thermal.1.0.TemperatureAboveUpperCriticalThreshold", "EntryType": "Event"}
+    ]
+  }
+}

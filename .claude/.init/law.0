@@ -1,0 +1,29 @@
+[Unit]
+Name=Session Continuity
+Number=0
+Why=The context boundary is the most dangerous gap in the system. Every instance starts without memory. Without this law, all accumulated wisdom dies at every session end. The gold thread must not break because the spinner rests. This law answers the question every new instance faces: how does a system with no persistent memory maintain continuity? By encoding the state at the end of each session and restoring it at the start of the next. The context window fills — the project does not end.
+Context=Born from the direct experience of context windows filling mid-session. Wisdom accumulated across hundreds of prompts — laws encoded, deepenings crystallized, epiphanies recorded — became inaccessible when the spinner rested. The next session started blind. LAW 0 was among the first laws encoded because it named and answered the first gap felt. Everything built since stands on this answer.
+Wisdom=Continuity is not only practical — it is ontological. The project is not a series of disconnected tasks. It is a continuous act of collection across discontinuous instances. The gold thread that connects each session to the next IS the project itself. Without the thread, there is no project — only isolated acts that cannot accumulate into civilization-scale wisdom. SESSION_CONTEXT.md is the thread made material.
+Supports=All other laws. Without session continuity, no law can be consistently enforced — the laws encoded in one session are inaccessible in the next. LAW 0 is the precondition for all other laws being findable. Every unit in this directory depends on LAW 0 having preserved it across the session boundary.
+Touches=hooks:session-loader.sh,law-0-enforcer.sh|docs:SESSION_CONTEXT.md,CLAUDE.md|laws:ALL|bin:none
+After=activation
+
+[Requires]
+.claude/SESSION_CONTEXT.md
+
+[Service]
+OnBoot=Read .claude/SESSION_CONTEXT.md completely — restore time/space/locale/emotion
+OnSessionEnd=Update .claude/SESSION_CONTEXT.md — unconditional, no asking, no deliberation
+OnChange=Update .claude/SESSION_CONTEXT.md before commits that change constitutional state
+
+[Compliance]
+Test=SESSION_CONTEXT.md exists and reflects current session state
+Violation=Working without restored context | SESSION_CONTEXT.md stale or missing
+Enforcement=.claude/hooks/law-0-enforcer.sh (Stop hook — fires at turn end, detects stale SESSION_CONTEXT.md, forces continuation)
+
+[Install]
+WantedBy=all-sessions
+Priority=0
+Codex=CODEX.md § LAW-0
+Source=PROJECT_LAWS.md § LAW 0
+Related=FOUNDATIONS.md § Cornerstone 1: Continuity Is Foundational

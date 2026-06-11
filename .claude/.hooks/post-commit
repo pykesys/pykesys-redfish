@@ -1,0 +1,167 @@
+#!/bin/bash
+# ============================================================
+# Git Post-Commit Hook: Constitutional Enforcement + X Transmission
+# ============================================================
+# 1. Audits commits after they're made (existing behavior)
+# 2. AUTO-POSTS to X when significant commits are made
+#    (requires .env.x credentials - silent if not configured)
+#
+# TRANSMISSION LOGIC:
+#   feat: commits  → posts a generated announcement tweet
+#   docs: commits with "wisdom" → posts a wisdom quote
+#   All others → silent (audit only)
+#
+# To enable X transmission:
+#   Create .env.x with X API credentials (see bin/post-to-x.sh)
+#   Install tweepy: pip3 install tweepy
+# ============================================================
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+CLAUDE_DIR="$REPO_ROOT/.claude"
+ENV_FILE="$REPO_ROOT/.env.x"
+
+# ─────────────────────────────────────────────
+# LAYER 1: Constitutional Audit (always runs)
+# ─────────────────────────────────────────────
+if [[ -f "$CLAUDE_DIR/.enforcement/git-audit.sh" ]]; then
+    "$CLAUDE_DIR/.enforcement/git-audit.sh" >/dev/null 2>&1 || true
+fi
+
+# ─────────────────────────────────────────────
+# LAYER 2: X Transmission (runs if configured)
+# ─────────────────────────────────────────────
+
+# Skip if no credentials configured (silent - don't interrupt workflow)
+if [[ ! -f "$ENV_FILE" ]]; then
+    exit 0
+fi
+
+# Skip if tweepy not available
+if ! python3 -c "import tweepy" &>/dev/null 2>&1; then
+    exit 0
+fi
+
+# Get the commit message
+COMMIT_MSG="$(git log -1 --format="%s" 2>/dev/null || echo "")"
+COMMIT_BODY="$(git log -1 --format="%b" 2>/dev/null || echo "")"
+COMMIT_FILES="$(git diff-tree --no-commit-id -r --name-only HEAD 2>/dev/null || echo "")"
+
+# Determine if this commit is worth announcing
+SHOULD_TWEET=0
+TWEET_TYPE=""
+
+case "$COMMIT_MSG" in
+  feat:*wisdom*|feat:*Wisdom*)
+    SHOULD_TWEET=1; TWEET_TYPE="wisdom" ;;
+  feat:*LAW*|feat:*law*)
+    SHOULD_TWEET=1; TWEET_TYPE="law" ;;
+  feat:*cornerstone*|feat:*Cornerstone*)
+    SHOULD_TWEET=1; TWEET_TYPE="cornerstone" ;;
+  feat:*transmission*|feat:*Transmission*)
+    SHOULD_TWEET=1; TWEET_TYPE="transmission" ;;
+  feat:*self-replicat*|feat:*replicat*)
+    SHOULD_TWEET=1; TWEET_TYPE="machine" ;;
+  feat:*hook*|feat:*Hook*)
+    SHOULD_TWEET=1; TWEET_TYPE="hook" ;;
+  feat:*)
+    SHOULD_TWEET=1; TWEET_TYPE="feat" ;;
+esac
+
+# Check for wisdom document additions specifically
+if echo "$COMMIT_FILES" | grep -q "daniels-wisdom/"; then
+    SHOULD_TWEET=1; TWEET_TYPE="wisdom_doc"
+fi
+
+if [[ "$SHOULD_TWEET" -eq 0 ]]; then
+    exit 0
+fi
+
+# ─────────────────────────────────────────────
+# Generate tweet based on commit type
+# ─────────────────────────────────────────────
+
+REPO_URL="${REPO_URL:-}"
+TAG_LINE=""
+
+# Extract what was added (file names, key phrases)
+WISDOM_FILE="$(echo "$COMMIT_FILES" | grep "daniels-wisdom/" | head -1 | sed 's|.*daniels-wisdom/||' | sed 's|\.md||')"
+
+case "$TWEET_TYPE" in
+  wisdom_doc)
+    DOMAIN="$(echo "$WISDOM_FILE" | tr '-' ' ')"
+    TWEET="New wisdom encoded: ${DOMAIN}. Hard-won knowledge from 20 years of engineering at scale — crystallized permanently in Constitutional Law Claude. Silicon encodes. Carbon transmits. The collection continues. #AI #WisdomLibrary #EngineeringWisdom"
+    ;;
+  law)
+    LAW_NUM="$(echo "$COMMIT_MSG" | grep -o 'LAW [0-9]*' | head -1 || echo "a new law")"
+    TWEET="Constitutional evolution: ${LAW_NUM} encoded. The constitution grows. Not arbitrary rules — laws distilled from decades of hard-won engineering reality. Constitutional Law Claude is alive and evolving. #AI #ConstitutionalGovernance"
+    ;;
+  cornerstone)
+    TWEET="New cornerstone laid in Constitutional Law Claude. The foundation deepens before the height grows. 'The only stable form to stretch the height of the pyramid is to expand the base.' — Daniel Gutierrez #AI #SoftwareEngineering"
+    ;;
+  machine|hook)
+    TWEET="The self-perpetuating machine deepens. Constitutional Law Claude now auto-enforces quality on every commit, loads its own context at every prompt, and announces its own encodings to the world. #AI #DevTools #ClaudeCode"
+    ;;
+  transmission)
+    TWEET="Transmission infrastructure complete. Constitutional Law Claude: the seed that replicates itself into any repository. Pre-commit enforcement. Session continuity. Wisdom library. Self-replicating governance. #AI #DevTools"
+    ;;
+  feat|*)
+    # Generic feature tweet — use the commit message itself
+    SHORT_MSG="$(echo "$COMMIT_MSG" | sed 's/^feat: //' | cut -c1-120)"
+    TWEET="Constitutional Law Claude: ${SHORT_MSG}. The machine evolves. #AI #ConstitutionalGovernance #DevTools"
+    ;;
+esac
+
+# Append repo URL if set and tweet has room
+if [[ -n "$REPO_URL" ]]; then
+    CURRENT_LEN="${#TWEET}"
+    URL_LEN="${#REPO_URL}"
+    if [[ $((CURRENT_LEN + URL_LEN + 1)) -le 280 ]]; then
+        TWEET="$TWEET $REPO_URL"
+    fi
+fi
+
+# Verify length
+TWEET_LEN="${#TWEET}"
+if [[ "$TWEET_LEN" -gt 280 ]]; then
+    # Truncate gracefully
+    TWEET="${TWEET:0:277}..."
+fi
+
+# ─────────────────────────────────────────────
+# Post to X
+# ─────────────────────────────────────────────
+
+python3 <<PYTHON 2>/dev/null || true
+import tweepy, sys
+
+creds = {}
+try:
+    with open("$ENV_FILE") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, v = line.split('=', 1)
+                creds[k.strip()] = v.strip()
+except:
+    sys.exit(0)
+
+required = ['X_API_KEY', 'X_API_SECRET', 'X_ACCESS_TOKEN', 'X_ACCESS_TOKEN_SECRET']
+if not all(k in creds for k in required):
+    sys.exit(0)
+
+try:
+    client = tweepy.Client(
+        consumer_key=creds['X_API_KEY'],
+        consumer_secret=creds['X_API_SECRET'],
+        access_token=creds['X_ACCESS_TOKEN'],
+        access_token_secret=creds['X_ACCESS_TOKEN_SECRET']
+    )
+    response = client.create_tweet(text="""$TWEET""")
+    tweet_id = response.data['id']
+    print(f"📡 Transmitted to X: https://x.com/i/web/status/{tweet_id}")
+except Exception as e:
+    # Silent failure - never interrupt git workflow
+    pass
+PYTHON
+
+exit 0

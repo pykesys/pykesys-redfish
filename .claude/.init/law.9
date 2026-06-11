@@ -1,0 +1,27 @@
+[Unit]
+Name=Breaking Changes Require ADR
+Number=9
+Why=Undocumented breaking changes are a betrayal of trust. Adopters who built on this foundation deserve to know when it changes. Architecture decisions made in silence become technical debt disguised as progress. The ADR is the promise kept to the future. It is the proof that the decision was made consciously, not accidentally.
+Context=Born from the experience of systems that changed without warning — where adopters arrived one morning to find that the ground they built on had shifted. The Architecture Decision Record (ADR) is the antidote to this. It is written before the change is made, not as a retrospective justification but as a prospective commitment: here is what we are about to do, here is why, here are the options we considered, here is what we chose. The ADR written before implementation forces the thinking that prevents regret.
+Wisdom=A decision made in silence is a decision that cannot be evaluated. Future maintainers cannot assess whether a past decision was right if the decision was never stated. The ADR is not bureaucracy — it is the minimum documentation that makes future improvement possible. LAW 9 applies at civilizational scale: constitutions that change without documented reasoning lose legitimacy. The ADR is how this project maintains constitutional legitimacy across versions.
+Supports=LAW 2 (documentation first — the ADR IS LAW 2 applied to architectural decisions), LAW 3 (git discipline — the ADR and CHANGELOG entry belong in the commit record), LAW 6 (core preservation — ADRs ensure amendments are intentional, not accidental erosion), META-LAW 1 (lineage — the ADR is the lineage document for architectural decisions).
+Touches=hooks:pre-commit|docs:docs/decisions/|laws:LAW 2,LAW 3|bin:none
+After=law.8
+
+[Requires]
+
+[Service]
+OnBreakingChange=Create Architecture Decision Record before implementing
+ADRContent=Problem statement | Options considered | Decision made | Consequences
+AfterDecision=Document in CHANGELOG.md with appropriate version bump
+Never=Introduce breaking changes without ADR | Major version change without documentation
+
+[Compliance]
+Test=All breaking changes have ADR | CHANGELOG current | Semantic versioning honored
+Violation=Breaking change without ADR | Version bump without CHANGELOG entry
+
+[Install]
+WantedBy=all-sessions
+Priority=9
+Codex=CODEX.md § LAW-9
+Source=PROJECT_LAWS.md § LAW 9

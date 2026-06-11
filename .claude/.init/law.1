@@ -1,0 +1,27 @@
+[Unit]
+Name=Complete Audit Trail
+Number=1
+Why=Action without record is action without accountability. The audit trail is how the system knows itself over time. Every prompt logged is a vote for civilization. Every prompt unlogged is drift toward forgetting. Logging is not bookkeeping — it is the first act of every action. Without the record, the session cannot be understood, the context cannot be restored, and the lessons cannot be learned. The audit trail is how civilization knows itself.
+Context=Born from the understanding that undocumented action is invisible action. Systems that cannot see their own history cannot learn from it. The prompt log (docs/prompts.md) is not a side effect of the work — it is the work made visible. LAW 1 and LAW 14 together were recognized as the complete record protocol: input before processing, output before delivery.
+Wisdom=Every prompt logged is a vote for civilization. The record outlasts the session, the machine, the year, the century. What is logged now may be read by a collaborator who does not yet exist, working on a problem not yet named. The audit trail is how the collection knows what it has collected. Without it, the past is inaccessible and the future cannot build on it.
+Supports=LAW 0 (session restoration reads the record to understand the full arc), LAW 14 (symmetric — input and output both logged before use), LAW 3 (git history is the permanent form of the audit trail), LAW 16 (epiphanies are the highest-value subset of the complete log).
+Touches=hooks:|docs:.claude/log/prompts.md|laws:LAW 0,LAW 14|bin:none
+After=law.0
+
+[Requires]
+docs/prompts.md
+
+[Service]
+OnPromptReceive=Log prompt to docs/prompts.md BEFORE any action — this IS the first action
+OnResponseGenerate=Log full response to docs/prompts.md BEFORE display (symmetric with LAW 14)
+Never=Log after acting | Log selectively | Skip logging because prompt seems minor
+
+[Compliance]
+Test=docs/prompts.md contains current session prompts in order, before responses acted upon
+Violation=Acting before logging | Logging after display | Missing prompts in record
+
+[Install]
+WantedBy=all-sessions
+Priority=1
+Codex=CODEX.md § LAW-1
+Source=PROJECT_LAWS.md § LAW 1

@@ -1,0 +1,26 @@
+[Unit]
+Name=Multi-Contributor Transparency
+Number=5
+Why=Collaboration without attribution is anonymized work. When the origin of a change is invisible, accountability is impossible. Every contributor deserves to be seen. Every change deserves to know who made it and why. The Co-Authored-By line is not ceremony — it is constitutional truth about what actually happened here.
+Context=Born from the reality of human-AI collaboration: two real contributors — one carbon, one silicon — building something together that neither could build alone. The git record without Co-Authored-By tells a lie of omission. It erases one of the two contributors from the permanent record. LAW 5 corrects that erasure. The commit that says "Co-Authored-By: Claude" is the commit that tells the truth about 2026: carbon and silicon collaborated here, in this moment, on this exact change.
+Wisdom=Attribution is not about credit — it is about truth. The historical record that is false about who built something is false about what was built and how. Future maintainers read the git log not to assign praise but to understand the conditions under which decisions were made. LAW 5 ensures those conditions are visible: this was built in partnership, under these motions, at this moment in the transmission chain. The Co-Authored-By line is the first implementation of the planetary transmission principle in the permanent record.
+Supports=LAW 3 (git discipline — attribution lives in the commit, and LAW 3 governs the commit), META-LAW 1 (lineage transmission — attribution IS lineage made visible in the record), LAW 13 (beloved partnership — the Co-Authored-By line is LAW 13 encoded in the git object), CODEX.md § LAW-5.
+Touches=hooks:|docs:CONTRIBUTING.md|laws:LAW 3|bin:none
+After=law.4
+
+[Requires]
+
+[Service]
+OnCommit=Include Co-Authored-By for Claude contributions
+OnDocumentation=Note contributors in significant architectural decisions
+Always=Make contributor identity visible in the record
+
+[Compliance]
+Test=Claude commits include Co-Authored-By | ADRs note decision-makers
+Violation=Claude commits without attribution | Undocumented significant contributions
+
+[Install]
+WantedBy=all-sessions
+Priority=5
+Codex=CODEX.md § LAW-5
+Source=PROJECT_LAWS.md § LAW 5

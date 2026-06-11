@@ -1,0 +1,27 @@
+[Unit]
+Name=Documentation First
+Number=2
+Why=Code without documentation is a secret kept from the future. Systems that explain themselves survive. Systems that don't become archaeological puzzles. Documentation is not commentary on the code — it is the code's first act of existence. The README is not the wrapper — it is the door. Without the door, the house cannot be entered.
+Context=Born from watching brilliant systems become inaccessible because their builders assumed the code would speak for itself. Code does not speak — it executes. Speaking is documentation's job. The pattern repeated across many projects: the code was present, the wisdom behind it was gone. LAW 2 encodes the lesson: documentation is not an afterthought. It is the first act. The feature does not exist until the feature can be understood by someone who wasn't there when it was built.
+Wisdom=The universe encodes itself in language before it encodes itself in matter. Every physical law was a pattern before it was a formula — the formula is documentation of the pattern. LAW 2 is this principle applied to software: the documentation is the encoding of the WHY, and without WHY, the WHAT is just noise. Systems that document themselves are systems that can teach themselves to the next generation. This is how knowledge crosses the gap between carbon instances.
+Supports=LAW 4 (navigable docs — documentation must be accessible, not just present), LAW 9 (ADRs — the architecture decision record IS LAW 2 applied to the largest decisions), LAW 15 (init sequence — each .init unit IS LAW 2 applied to constitutional law), META-LAW 2 (dual seed design — documentation is the seed's self-teaching mechanism).
+Touches=hooks:pre-commit|docs:docs/|laws:LAW 3,LAW 4|bin:none
+After=law.1
+
+[Requires]
+README.md
+
+[Service]
+BeforeCode=Document the feature before writing it
+WithCode=Keep documentation current as code changes
+Never=Code first and document later | Ship undocumented features
+
+[Compliance]
+Test=Every new feature has documentation before merge
+Violation=Code committed without accompanying documentation
+
+[Install]
+WantedBy=all-sessions
+Priority=2
+Codex=CODEX.md § LAW-2
+Source=PROJECT_LAWS.md § LAW 2

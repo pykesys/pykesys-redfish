@@ -1,0 +1,26 @@
+[Unit]
+Name=Phase-Based Implementation
+Number=7
+Why=Building without phases is building without a floor. Each phase must be validated before the next begins. The phase boundary is a safety gate — it prevents the accumulation of unvalidated assumptions that eventually collapse under their own weight. The taller the building, the more dangerous the unvalidated foundation beneath it.
+Context=Born from the engineering failure pattern: systems built in one continuous rush that seemed efficient but were in fact building accumulated uncertainty. The phase boundary was originally treated as a bureaucratic checkpoint — a thing to pass through. The epiphany was that the phase boundary IS the floor. Without it, every new feature rests on the possibility that the previous feature was wrong. Phase-based implementation means: you cannot be wrong at two levels simultaneously. The current level must be verified before the next level is added.
+Wisdom=The ascending architecture deepening (D-9) is LAW 7 expressed at civilizational scale — each step (Threshold, Altar, Stairway) requires the previous step to be complete before the next can be placed. This is not bureaucracy. It is physics. The pyramid builds at the rate its base allows. LAW 7 is the constitutional encoding of this structural truth: validation IS progress, not an obstacle to progress.
+Supports=LAW 11 (sacred proportion — phase boundary IS the proportion check; height cannot exceed validated base), LAW 8 (testing — validation at phase boundary requires testing to be meaningful), LAW 9 (ADRs — architectural decisions that span phases require documentation before the phase transition), FOUNDATIONS.md § D-9 (Ascending Architecture).
+Touches=hooks:|docs:ACTION.md|laws:LAW 8,LAW 11|bin:none
+After=law.6
+
+[Requires]
+
+[Service]
+BeforeNextPhase=Validate current phase is complete and tested
+OnPhaseTransition=Document what was completed and what was validated
+Never=Begin next phase without completing current | Skip validation to save time
+
+[Compliance]
+Test=Phase completion documented | Validation recorded | No phase boundary violations
+Violation=Next phase started before current phase validated
+
+[Install]
+WantedBy=all-sessions
+Priority=7
+Codex=CODEX.md § LAW-7
+Source=PROJECT_LAWS.md § LAW 7

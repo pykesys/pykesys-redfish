@@ -1,0 +1,8 @@
+Django==4.2.25
+djangorestframework==3.15.2
+whitenoise==6.8.2
+apscheduler==3.10.4
+django-apscheduler==0.7.0
+requests==2.32
+pytest==8.3
+pytest-django==4.9.0

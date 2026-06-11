@@ -1,0 +1,28 @@
+[Unit]
+Name=Testing Before Production
+Number=8
+Why=Untested work is speculation encoded as fact. Production is not the test environment — it is where failures have consequences. The test is not a gate to open when convenient. It is the proof that the work is what it claims to be. A commit without a test is a claim without evidence.
+Context=Born from the pattern of confident code that met reality and failed — not because the logic was wrong but because the assumptions were untested. The test environment exists to be wrong safely. Production is where the cost of being wrong is borne by real users, real systems, real trust. LAW 8 encodes a simple asymmetry: the cost of testing is paid once; the cost of not testing is paid unpredictably, at the worst possible moment, by people who had no say in the decision to skip the test.
+Wisdom=Testing is not about finding bugs — it is about replacing assumption with knowledge. The untested system is a system that believes its own claims. The tested system is a system that has earned its claims. There is a difference between a function that appears to work and a function that has been shown to work under the conditions where it must work. LAW 8 mandates the latter. The hook that was tested on macOS and Linux is a different artifact than the hook that was tested on macOS only — even if the code is identical.
+Supports=LAW 7 (phase validation — testing IS the validation mechanism at phase boundaries), LAW 11 (sacred proportion — untested height is unvalidated height; the base is not confirmed until tested), LAW 12 (minimum viable path — the minimum test that proves the claim is the right test, not the minimum effort to avoid testing).
+Touches=hooks:pre-commit|docs:docs/|laws:LAW 17,LAW 7|bin:none
+After=law.7
+
+[Requires]
+.claude/.test-audit/
+
+[Service]
+BeforeProduction=Test on equivalent of production environment
+BeforeMerge=Verify hooks work on target platforms (macOS, Linux, WSL2)
+OnBugFix=Write test that demonstrates the bug before fixing
+Never=Deploy without testing | Use production as test environment
+
+[Compliance]
+Test=All changes tested before deployment | Test results documented
+Violation=Untested code in production | Missing test coverage for new features
+
+[Install]
+WantedBy=all-sessions
+Priority=8
+Codex=CODEX.md § LAW-8
+Source=PROJECT_LAWS.md § LAW 8

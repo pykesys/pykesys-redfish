@@ -1,0 +1,24 @@
+#!/bin/bash
+# Git Pre-Push Hook: Constitutional Enforcement
+# Final check before pushing to remote
+
+YELLOW='\033[1;33m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo -e "${YELLOW}⚖️  Constitutional Pre-Push Validation${NC}"
+
+CLAUDE_DIR="$(git rev-parse --show-toplevel)/.claude"
+
+if [[ -f "$CLAUDE_DIR/.enforcement/git-audit.sh" ]]; then
+    if "$CLAUDE_DIR/.enforcement/git-audit.sh"; then
+        echo -e "${GREEN}✓ All commits compliant - push allowed${NC}"
+        exit 0
+    else
+        echo -e "${YELLOW}⚠️  Some commits have violations${NC}"
+        echo "Push allowed, but review .claude/.violations/active/"
+        exit 0
+    fi
+fi
+
+exit 0

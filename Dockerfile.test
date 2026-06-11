@@ -1,0 +1,15 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install SDK dependencies
+COPY pyproject.toml uv.lock* ./
+COPY src/ ./src/
+RUN pip install --no-cache-dir httpx typer rich requests pytest
+
+# Install the SDK itself in editable mode
+RUN pip install --no-cache-dir -e .
+
+COPY tests/ ./tests/
+
+CMD ["python", "-m", "pytest", "tests/integration/", "-v"]

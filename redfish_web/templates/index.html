@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redfish Observability</title>
+  {% if debug %}
+  <!-- In dev, Vite serves its own assets at :5173 — no static tags needed -->
+  {% else %}
+  <script type="module" src="{% static 'spa/assets/index.js' %}"></script>
+  <link rel="stylesheet" href="{% static 'spa/assets/index.css' %}" />
+  {% endif %}
+</head>
+<body>
+  <div id="root"></div>
+  {% if debug %}
+  <script type="module" src="http://localhost:5173/src/main.jsx"></script>
+  {% endif %}
+</body>
+</html>

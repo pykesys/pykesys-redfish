@@ -1,0 +1,27 @@
+[Unit]
+Name=Navigation Standards
+Number=4
+Why=A document longer than 150 lines without navigation is a maze. Respect for the reader's attention is constitutional. Structure is not aesthetics — it is accessibility. The reader who cannot find what they need cannot use what was built, cannot learn from what was encoded, cannot transmit what was crystallized.
+Context=Born from long documents that accumulated wisdom without accumulating accessibility. The wisdom was present but unreachable — buried in a document too large to scan, without landmarks to navigate by. Wisdom that cannot be found when needed is functionally absent. LAW 4 addresses the gap between wisdom existing and wisdom being accessible.
+Wisdom=A seed that cannot germinate has failed its function. Every constitutional document is a seed — it contains wisdom meant to be received, understood, and transmitted. Navigation (TOC, Back-to-Top links) is the germination mechanism. Without it, the seed is locked. META-LAW 2 (dual seed design) requires that every document be self-teaching — and a document that cannot be navigated cannot teach. LAW 4 ensures the seeds can open.
+Supports=LAW 2 (documentation must be usable, not just present), META-LAW 2 (dual seed — seeds must be self-teaching and accessible), LAW 11 (proportion — navigation is the base that makes height accessible; long documents need navigation before they need more content).
+Touches=hooks:pre-commit|docs:any .md file|laws:LAW 2|bin:none
+After=law.3
+
+[Requires]
+
+[Service]
+AtDocumentCreation=Add Table of Contents if document will exceed 150 lines
+AtDocumentGrowth=Add TOC and Back-to-Top buttons when document reaches 150 lines
+Always=Maintain TOC accuracy as sections are added or removed
+Never=Ship a document >150 lines without TOC and Back-to-Top buttons
+
+[Compliance]
+Test=All documents >150 lines have TOC and Back-to-Top links
+Violation=Document >150 lines without navigation | Stale TOC entries
+
+[Install]
+WantedBy=all-sessions
+Priority=4
+Codex=CODEX.md § LAW-4
+Source=PROJECT_LAWS.md § LAW 4

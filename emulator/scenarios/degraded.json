@@ -1,0 +1,25 @@
+{
+  "name": "degraded",
+  "description": "Warning state — elevated temps, one fan failed, one SEL warning entry",
+  "overrides": {
+    "health": "Warning",
+    "temperatures": [
+      {"Name": "Inlet Temp",  "ReadingCelsius": 46.0, "UpperThresholdCritical": 55.0, "UpperThresholdNonCritical": 45.0, "Status": {"Health": "Warning", "State": "Enabled"}},
+      {"Name": "CPU1 Temp",   "ReadingCelsius": 72.0, "UpperThresholdCritical": 85.0, "UpperThresholdNonCritical": 75.0, "Status": {"Health": "Warning", "State": "Enabled"}},
+      {"Name": "CPU2 Temp",   "ReadingCelsius": 70.0, "UpperThresholdCritical": 85.0, "UpperThresholdNonCritical": 75.0, "Status": {"Health": "OK",      "State": "Enabled"}}
+    ],
+    "fans": [
+      {"Name": "Fan 1A", "Reading": 0,    "ReadingUnits": "RPM", "Status": {"Health": "Critical", "State": "Enabled"}},
+      {"Name": "Fan 1B", "Reading": 3100, "ReadingUnits": "RPM", "Status": {"Health": "OK",       "State": "Enabled"}},
+      {"Name": "Fan 2A", "Reading": 3300, "ReadingUnits": "RPM", "Status": {"Health": "OK",       "State": "Enabled"}},
+      {"Name": "Fan 2B", "Reading": 3250, "ReadingUnits": "RPM", "Status": {"Health": "OK",       "State": "Enabled"}}
+    ],
+    "power_supplies": [
+      {"Name": "PSU1", "PowerOutputWatts": 450.0, "LineInputVoltage": 220.0, "Status": {"Health": "OK",      "State": "Enabled"}},
+      {"Name": "PSU2", "PowerOutputWatts": 448.0, "LineInputVoltage": 220.0, "Status": {"Health": "Warning", "State": "Enabled"}}
+    ],
+    "sel_log": [
+      {"Id": "1", "Created": "2025-01-01T00:00:00Z", "Severity": "Warning", "Message": "Fan 1A speed below minimum threshold (0 RPM)", "MessageId": "Fan.1.0.FanSpeedBelowMinimum", "EntryType": "Event"}
+    ]
+  }
+}

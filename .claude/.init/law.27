@@ -1,0 +1,49 @@
+[Unit]
+Name=Session Coherence Ladder — Climb Before You Build
+Number=27
+Why=Between sessions, entropy accumulates silently. Stale metadata, missing TOC entries, broken references, orphaned .init units, accretion gaps — none of these announce themselves. A Claude that builds new work on an incoherent ground makes the incoherence harder to find. The ladder is the counter-force to entropy: a ten-rung climb at session start that verifies the ground is solid before any new work begins. The init.d system loads the constitution (what is right). The cascade propagates changes (what must follow). The ladder verifies coherence (what is currently true). All three are required. None substitutes for the others.
+Context=Born 2026-03-26. While encoding LAW 26 (Cascade Coherence), Daniel articulated the ladder concept: "we need to encode all the things we should be doing while we work... like automatically scanning all *.md files in a repo and adding a TOC/BTT navigation if it has more than 2 pages. The 'ladder' will be loaded every time a Lawful session starts." Ten rungs were designed: Navigation Scaffold, Init Unit Completeness, Cascade Chain Consistency, Accretion Log Presence, Memory Residency Verification, Dead Reference Scan, TOC Sync, Constitutional Integrity, Orphaned Init Unit Scan, Stale Metadata Scan. The output is a State Report delivered before any new work begins.
+Wisdom=The distinction is precise: init.d knows what is right; the ladder checks whether right is currently true. A law can be declared and enforced (init.d handles this) while the repo has drifted out of compliance between sessions (the ladder catches this). Coherence is not permanent — it must be re-verified each session. The ladder does not repeat the law loading. It audits the current state against what the law requires.
+Supports=LAW 2 — Documentation First | LAW 4 — Navigation Standards | LAW 18 — Constitutional Database Integrity | LAW 19 — Memory Residency | LAW 26 — Cascade Coherence
+Touches=hooks:|docs:PROJECT_LAWS.md,CODEX.md,CONSTITUTION-VERSION.md,docs/accretion.md|laws:law.2,law.4,law.18,law.19,law.26|bin:none
+After=law.26
+
+[Requires]
+law.2
+law.4
+law.18
+law.19
+law.26
+
+[Service]
+OnBoot=Run the Session Coherence Ladder (all ten rungs, in order). Deliver the State Report. Fix all FAIL items before any new work begins.
+OnSessionEnd=Confirm the ladder was run and the State Report was delivered. If new drift was introduced during the session (e.g. a new *.md file without TOC, a new law without .init unit), run the affected rungs again and fix before closing.
+OnChange=When the repo structure changes in ways that affect ladder rungs (new *.md files, new laws, new cascade targets, new init units), re-run the relevant rungs immediately.
+
+[Rungs]
+Rung1_NavigationScaffold=Scan every *.md file in the repo. For any file exceeding 150 lines: (1) verify a Table of Contents exists at the top — if missing, generate one from the actual headers and insert it; (2) verify Back-to-Top anchor links appear after each major section (## or ###) — if missing, insert them. Format: [↑ Back to Top](#table-of-contents). Do not modify files that already have correct navigation.
+Rung2_InitUnitCompleteness=Extract all law numbers from PROJECT_LAWS.md Table of Contents (pattern: LAW N). List all files matching .claude/.init/law.N. Diff: any law declared in PROJECT_LAWS.md that lacks a corresponding .init/law.N file is a violation. Create any missing .init units before proceeding. This is Obligation 2 of LAW 26.
+Rung3_CascadeChainConsistency=Read the cascade chain definition (from CLAUDE.md or project config). For each file in the chain: read it and verify the tool table, law references, script names, and file paths are consistent with the other files in the chain. Flag any discrepancy (e.g. alarms.sh documented in README but missing from MEMORY.md). Do not declare a change done until all nodes are consistent.
+Rung4_AccretionLogPresence=Verify docs/accretion.md exists. If missing: flag and create the file with the standard header. Verify the most recent meaningful session has a stratum. Compare the date of the most recent stratum to the git log for the repo — if the repo has commits more recent than the last stratum date (and those commits represent meaningful work), flag the gap. This is Obligation 3 of LAW 26.
+Rung5_MemoryResidencyVerification=Verify MEMORY.md exists at the repo root. Read the first ten lines to confirm it is the project's primary memory file, not a pointer. If the auto-memory directory (~/.claude/projects/) contains project-specific content for this repo, flag it — project memory must live in the repo, not externally. This is LAW 19.
+Rung6_DeadReferenceScan=Scan all *.md files for Markdown links ([text](path)) and bare file path references. For each internal reference, verify the target file or section exists. Report all broken links (file not found, section anchor not found). Do not auto-fix — report and flag for human resolution.
+Rung7_TOCSync=For each *.md file with a Table of Contents: (1) verify every TOC entry has a corresponding header in the file body; (2) verify every major header (## or ###) in the file body has a TOC entry. Orphaned TOC entries (TOC item with no header) and unlinked headers (header with no TOC entry) are both violations. Flag both.
+Rung8_ConstitutionalIntegrity=In law-mother (template-law-claude): run python3 .claude/bin/law-manage.py validate. In child projects: verify the law count in CONSTITUTION-VERSION.md matches the actual number of laws in PROJECT_LAWS.md TOC. Verify all law numbers declared in CLAUDE.md working principles exist in PROJECT_LAWS.md. Any constitutional drift is a blocker.
+Rung9_OrphanedInitUnitScan=List all files matching .claude/.init/law.N. For each, extract N and verify that LAW N appears in the PROJECT_LAWS.md Table of Contents. Any .init/law.N with no corresponding declared law is an orphan — flag it. Also check for .init/meta-law.N files against META-LAW N declarations. This is the inverse of Rung 2.
+Rung10_StaleMetadataScan=Find all files containing "Last Updated: YYYY-MM-DD" or "**Last Updated**" patterns. For each: compare the declared date to git log --follow -1 -- <file> modification date. If git shows the file was modified more recently than the declared date, flag it as stale metadata. Also check VERSION entries in PROJECT_LAWS.md and CHANGELOG.md against recent commits.
+
+[StateReport]
+Format=Deliver the State Report in this format before any new work begins:\n\nSession Coherence Ladder — State Report\n========================================\nRung 1:  Navigation Scaffold          [PASS | FIXED (n files) | FAIL]\nRung 2:  Init Unit Completeness       [PASS | FIXED (n units) | FAIL]\nRung 3:  Cascade Chain Consistency    [PASS | FAIL (n discrepancies)]\nRung 4:  Accretion Log Presence       [PASS | FAIL (last stratum: date)]\nRung 5:  Memory Residency             [PASS | FAIL (n leaked entries)]\nRung 6:  Dead References              [PASS | FAIL (n broken links)]\nRung 7:  TOC Sync                     [PASS | FIXED (n files) | FAIL]\nRung 8:  Constitutional Integrity     [PASS | FAIL (violation detail)]\nRung 9:  Orphaned Init Units          [PASS | FAIL (n orphans)]\nRung 10: Stale Metadata               [PASS | FAIL (n stale dates)]\n\nGround is solid. Ready to build. / n items require repair before new work.
+Note=FIXED means the rung was automatically corrected (navigation, TOC, missing .init units). FAIL means human resolution is required. PASS means no action needed. Do not skip FAIL items. Ground must be solid before building.
+
+[Compliance]
+Test=At session start: was the State Report delivered? Are all rungs PASS or FIXED? If any rung is FAIL, was it addressed before new work began?
+Violation=Starting new work without running the ladder. Delivering the State Report and ignoring FAIL items. Skipping rungs because the session "seems clean." Treating the ladder as optional for short sessions. The ladder is not calibrated to session length — it is calibrated to the fact that entropy accumulates between sessions regardless of what happened in the last session.
+Enforcement=The OnBoot obligation is constitutional. The State Report must precede any new tool, feature, commit, or cascade. A session that builds on unverified ground violates LAW 27 even if all the new work is correct.
+
+[Install]
+WantedBy=all-sessions
+Priority=27
+Codex=CODEX.md § LAW-27
+Source=PROJECT_LAWS.md § LAW 27
+Related=law.2,law.4,law.18,law.19,law.26

@@ -1,0 +1,25 @@
+{
+  "name": "healthy",
+  "description": "All nodes healthy — power On, health OK, normal sensor readings, empty SEL",
+  "overrides": {
+    "power_state": "On",
+    "health": "OK",
+    "indicator_led": "Off",
+    "sel_log": [],
+    "temperatures": [
+      {"Name": "Inlet Temp",  "ReadingCelsius": 22.0, "UpperThresholdCritical": 55.0, "UpperThresholdNonCritical": 45.0, "Status": {"Health": "OK", "State": "Enabled"}},
+      {"Name": "CPU1 Temp",   "ReadingCelsius": 44.0, "UpperThresholdCritical": 85.0, "UpperThresholdNonCritical": 75.0, "Status": {"Health": "OK", "State": "Enabled"}},
+      {"Name": "CPU2 Temp",   "ReadingCelsius": 42.0, "UpperThresholdCritical": 85.0, "UpperThresholdNonCritical": 75.0, "Status": {"Health": "OK", "State": "Enabled"}}
+    ],
+    "fans": [
+      {"Name": "Fan 1A", "Reading": 3200, "ReadingUnits": "RPM", "Status": {"Health": "OK", "State": "Enabled"}},
+      {"Name": "Fan 1B", "Reading": 3100, "ReadingUnits": "RPM", "Status": {"Health": "OK", "State": "Enabled"}},
+      {"Name": "Fan 2A", "Reading": 3300, "ReadingUnits": "RPM", "Status": {"Health": "OK", "State": "Enabled"}},
+      {"Name": "Fan 2B", "Reading": 3250, "ReadingUnits": "RPM", "Status": {"Health": "OK", "State": "Enabled"}}
+    ],
+    "power_supplies": [
+      {"Name": "PSU1", "PowerOutputWatts": 450.0, "LineInputVoltage": 220.0, "Status": {"Health": "OK", "State": "Enabled"}},
+      {"Name": "PSU2", "PowerOutputWatts": 448.0, "LineInputVoltage": 220.0, "Status": {"Health": "OK", "State": "Enabled"}}
+    ]
+  }
+}

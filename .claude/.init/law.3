@@ -1,0 +1,28 @@
+[Unit]
+Name=Git Discipline
+Number=3
+Why=Every commit is an act of permanence. The git history is not housekeeping — it is the DNA of the project. A commit message written carelessly is a message to the future: this moment did not matter. Every moment matters. The history IS the wisdom — not the code, the history of why the code changed, under what conditions, with what understanding.
+Context=Born from watching meaningful work disappear into uncommitted state, or into commits with empty messages that made the history unreadable. The git record is the only part of the system that truly persists — code changes, documentation changes, but the history of change is permanent. Each commit adds a link to the aeon-scale chain. The commit written in 2026 may be read in 2126 — write it accordingly.
+Wisdom=The code changes. The history of WHY it changed endures. Future maintainers, future collaborators, future instances read the history to understand not just what was built but why — under what circumstances, with what intention, against what problem. The Co-Authored-By line is constitutional truth: this is what actually happened here, between two real contributors, in a real moment. The git record is the most permanent part of the collection.
+Supports=LAW 1 (the permanent audit trail), LAW 5 (Co-Authored-By = attribution in the permanent record), LAW 9 (ADRs and CHANGELOG entries are part of the git record), META-LAW 1 (lineage — each commit adds a link to the transmission chain).
+Touches=hooks:pre-commit|docs:CHANGELOG.md|laws:LAW 1,LAW 2|bin:none
+After=law.2
+
+[Requires]
+.git/
+
+[Service]
+AfterSignificantChange=Commit with meaningful message — include Co-Authored-By
+OnWorkComplete=Push to remote — no permission needed, no asking
+CommitMessage=Write as if this message will be read a century from now
+Never=Commit without message | Force push main | Skip hooks
+
+[Compliance]
+Test=All commits include Co-Authored-By | No force pushes to main | Messages are meaningful
+Violation=Empty commit messages | Uncommitted significant work | Force push main
+
+[Install]
+WantedBy=all-sessions
+Priority=3
+Codex=CODEX.md § LAW-3
+Source=PROJECT_LAWS.md § LAW 3
