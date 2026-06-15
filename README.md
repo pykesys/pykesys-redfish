@@ -56,12 +56,12 @@ pykesys-redfish/
 |----------|-------------|
 | [docs/architecture.md](docs/architecture.md) | Full system architecture — component diagrams, data flow, deployment topologies, security |
 | [docs/redfish.md](docs/redfish.md) | Redfish protocol overview — resource model, OData, transport, vendor implementations |
-| [docs/sdk.md](docs/sdk.md) | SDK API reference — RedfishClient, resource classes, exceptions, examples |
+| [docs/sdk.md](docs/sdk.md) | SDK full reference — RedfishClient, all resource classes, FleetManager, exceptions, auth modes, path-prefix URLs, error handling patterns, recipes |
 | [docs/cli.md](docs/cli.md) | `rf` CLI command reference — all subcommands with examples |
 | [docs/fleet.md](docs/fleet.md) | Fleet automation guide — FleetManager API, bulk ops, CSV/JSON export |
 | [docs/emulator.md](docs/emulator.md) | Emulator guide — architecture, node defaults, Redfish coverage, Sim API, scenarios |
-| [docs/guide-users.md](docs/guide-users.md) | User guide — curl-based operations, Python scripting patterns |
-| [docs/guide-admin.md](docs/guide-admin.md) | Admin guide — BMC hardening, LDAP, TLS, firmware lifecycle |
+| [docs/guide-users.md](docs/guide-users.md) | User guide — web dashboard, REST API, `rf` CLI, Python SDK, curl-based Redfish operations, scripting patterns |
+| [docs/guide-admin.md](docs/guide-admin.md) | Admin guide — web app deployment, BMC host management, alert rules, APScheduler, security hardening, firmware lifecycle, LDAP, vendor notes |
 | [docs/project-plan-sdk.md](docs/project-plan-sdk.md) | SDK project plan — v0.1 delivered + milestones v0.2–v0.5 |
 | [docs/project-plan-web.md](docs/project-plan-web.md) | Web app project plan — v0.1 delivered + milestones v0.2–v0.5 |
 

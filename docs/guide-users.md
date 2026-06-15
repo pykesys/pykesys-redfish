@@ -1,574 +1,838 @@
-# Redfish User Guide
+# User Guide — pykesys-redfish
 
-This guide covers how to interact with a Redfish service — querying hardware state, performing power and boot operations, reading logs, and automating tasks with scripts or SDKs. No prior Redfish experience is assumed, but familiarity with REST APIs and JSON will help.
+This guide covers everything a user of this stack needs: the web observability dashboard, the `rf` CLI, the Python SDK, and direct Redfish API access via `curl`. No prior Redfish experience is assumed.
 
-See [redfish.md](redfish.md) for background on what Redfish is and how it is structured.
+See [redfish.md](redfish.md) for Redfish protocol background, [sdk.md](sdk.md) for the full SDK reference, and [cli.md](cli.md) for the complete CLI reference.
 
----
+## Table of Contents
 
-## Connecting to a Redfish Service
-
-The Redfish service root is always at:
-
-```
-https://<bmc-hostname-or-ip>/redfish/v1/
-```
-
-All URIs in this guide are relative to that base. The BMC IP is typically on a dedicated management network (IPMI LAN / OOB network), separate from the server's production interfaces.
-
-### Verify Connectivity
-
-```bash
-curl -k https://192.168.1.100/redfish/v1/ | python3 -m json.tool
-```
-
-The `-k` flag skips TLS verification. In production, replace it with `--cacert /path/to/bmc-ca.pem`.
-
-A successful response returns the service root including `RedfishVersion` and links to top-level collections:
-
-```json
-{
-    "@odata.type": "#ServiceRoot.v1_15_0.ServiceRoot",
-    "@odata.id": "/redfish/v1/",
-    "Id": "RootService",
-    "Name": "Root Service",
-    "RedfishVersion": "1.15.0",
-    "Systems": { "@odata.id": "/redfish/v1/Systems/" },
-    "Chassis": { "@odata.id": "/redfish/v1/Chassis/" },
-    "Managers": { "@odata.id": "/redfish/v1/Managers/" },
-    "AccountService": { "@odata.id": "/redfish/v1/AccountService/" },
-    "SessionService": { "@odata.id": "/redfish/v1/SessionService/" },
-    "EventService": { "@odata.id": "/redfish/v1/EventService/" },
-    "UpdateService": { "@odata.id": "/redfish/v1/UpdateService/" }
-}
-```
+- [Web Observability Dashboard](#web-observability-dashboard)
+  - [Accessing the dashboard](#accessing-the-dashboard)
+  - [Fleet overview](#fleet-overview)
+  - [Host detail](#host-detail)
+  - [Alerts](#alerts)
+  - [REST API](#rest-api)
+- [rf CLI](#rf-cli)
+  - [Installation](#installation)
+  - [Credentials](#credentials)
+  - [Command reference](#command-reference)
+- [Python SDK](#python-sdk)
+  - [Single BMC](#single-bmc)
+  - [Fleet operations](#fleet-operations)
+- [Direct Redfish API (curl)](#direct-redfish-api-curl)
+  - [Connecting](#connecting)
+  - [Authentication](#authentication)
+  - [Querying system information](#querying-system-information)
+  - [Power operations](#power-operations)
+  - [Boot override](#boot-override)
+  - [Reading event logs](#reading-event-logs)
+  - [Sensor data](#sensor-data)
+  - [Identification LED](#identification-led)
+  - [Event subscriptions](#event-subscriptions)
+- [Scripting Patterns](#scripting-patterns)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
-## Authentication
+## Web Observability Dashboard
 
-### Option 1: HTTP Basic Auth (simplest)
+The web app (`redfish_web/` + `frontend/`) provides a React SPA backed by a Django REST API. It polls all registered BMC hosts on a configurable interval and stores inventory snapshots, sensor readings, log entries, and alert events.
 
-Pass credentials on every request. Suitable for one-off queries and scripts.
+### Accessing the dashboard
+
+| Mode | URL |
+|------|-----|
+| Docker Compose (full stack) | `http://localhost:8000` |
+| Local dev server | `http://localhost:8000` (Django) + `http://localhost:5173` (Vite) |
 
 ```bash
-curl -k -u admin:password https://192.168.1.100/redfish/v1/Systems/1/
+# Start full stack
+docker compose up
+
+# Or run locally
+./run-dashboard.sh all    # Django + React + emulator in background
 ```
 
-### Option 2: Session Token (preferred for multi-request workflows)
+### Fleet overview
 
-Create a session, capture the `X-Auth-Token`, use it for all subsequent requests, then delete the session when done.
+The dashboard home page (`/`) shows a grid of all registered BMC hosts. Each card displays:
 
-**Create session:**
+- Hostname and BMC address
+- Current power state (`On` / `Off`) with color coding
+- Health rollup (`OK` / `Warning` / `Critical`)
+- Last polled timestamp
+- Any open alert events
+
+Click any host card to open the host detail view.
+
+### Host detail
+
+The host detail page (`/hosts/{id}`) shows:
+
+**Summary tab** — current snapshot: system model, serial, BIOS version, memory, processor count/model, health, power state.
+
+**Sensors tab** — latest sensor readings from the most recent snapshot: all temperature probes (°C with thresholds) and fan speeds (RPM).
+
+**Logs tab** — SEL entries stored from the last poll, filterable by severity.
+
+**Snapshots tab** — historical inventory timeline. Click any row to see the full snapshot detail including raw JSON.
+
+**Actions** (top-right button group):
+- **Poll now** — trigger an immediate out-of-cycle poll for this host
+- **Power** — send a power reset (`GracefulRestart` default, configurable)
+- **Boot** — set a one-time boot override target
+
+### Alerts
+
+The Alerts page (`/alerts`) lists all open and historical alert events.
+
+**Alert rules** are configured by an admin (see [Admin Guide — Alert rules configuration](guide-admin.md#alert-rules-configuration)). When a polled snapshot matches a rule condition, an alert event is created and (optionally) a Slack webhook is called.
+
+**Resolving an alert** — click the Resolve button on any open event. This sets `resolved_at` and closes the event. The rule continues to evaluate on future polls; a new event is created if the condition is matched again.
+
+### REST API
+
+The web app exposes a REST API for automation and integration.
+
+#### Hosts
 
 ```bash
-curl -k -X POST \
+# List all registered BMC hosts
+curl http://localhost:8000/api/hosts/
+
+# Create a new host
+curl -X POST http://localhost:8000/api/hosts/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "host": "bmc-dgx-01.mgmt",
+    "display_name": "DGX Node 01",
+    "username": "admin",
+    "password": "secret",
+    "poll_interval": 60,
+    "verify_ssl": false
+  }'
+
+# Get a specific host
+curl http://localhost:8000/api/hosts/1/
+
+# Update poll interval
+curl -X PATCH http://localhost:8000/api/hosts/1/ \
+  -H "Content-Type: application/json" \
+  -d '{"poll_interval": 120}'
+
+# Trigger an immediate poll
+curl -X POST http://localhost:8000/api/hosts/1/poll/
+
+# Delete a host
+curl -X DELETE http://localhost:8000/api/hosts/1/
+```
+
+#### Power and boot actions (via API)
+
+```bash
+# Graceful restart via web API
+curl -X POST http://localhost:8000/api/hosts/1/power/ \
+  -H "Content-Type: application/json" \
+  -d '{"reset_type": "GracefulRestart"}'
+
+# Force power off
+curl -X POST http://localhost:8000/api/hosts/1/power/ \
+  -H "Content-Type: application/json" \
+  -d '{"reset_type": "ForceOff"}'
+
+# Set one-time PXE boot
+curl -X POST http://localhost:8000/api/hosts/1/boot/ \
+  -H "Content-Type: application/json" \
+  -d '{"target": "Pxe", "enabled": "Once"}'
+
+# Clear boot override
+curl -X POST http://localhost:8000/api/hosts/1/boot/ \
+  -H "Content-Type: application/json" \
+  -d '{"target": "None", "enabled": "Disabled"}'
+```
+
+#### Fleet dashboard data
+
+```bash
+# All hosts with their latest snapshot embedded
+curl http://localhost:8000/api/fleet/
+```
+
+#### Inventory and sensors
+
+```bash
+# Snapshot history for host 1
+curl http://localhost:8000/api/hosts/1/snapshots/
+
+# Specific snapshot (full detail with raw JSON)
+curl http://localhost:8000/api/hosts/1/snapshots/42/
+
+# Sensor readings from the latest snapshot
+curl http://localhost:8000/api/hosts/1/sensors/
+
+# SEL log entries stored from polls
+curl http://localhost:8000/api/hosts/1/logs/
+```
+
+#### Alert rules and events
+
+```bash
+# List alert rules
+curl http://localhost:8000/api/alerts/rules/
+
+# List open alert events
+curl "http://localhost:8000/api/alerts/events/?open=true"
+
+# List events for a specific host
+curl "http://localhost:8000/api/alerts/events/?host=1"
+
+# Resolve an event
+curl -X POST http://localhost:8000/api/alerts/events/7/resolve/
+```
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+## rf CLI
+
+The `rf` CLI provides single-BMC operations from the terminal. It uses the same `RedfishClient` as the SDK.
+
+### Installation
+
+```bash
+# Install with uv (within the project)
+uv sync
+uv run rf --help
+
+# Or install the package globally
+pip install pykesys-redfish
+rf --help
+```
+
+### Credentials
+
+Set once per environment via environment variables to avoid typing credentials on every command:
+
+```bash
+export RF_HOST=https://192.168.1.100   # or http://localhost:8888/bmc/1 for emulator
+export RF_USER=admin
+export RF_PASS=password
+export RF_VERIFY_SSL=false             # only if using self-signed/no cert
+```
+
+All three can also be passed per-command:
+
+```bash
+uv run rf --host https://bmc.example.com --user admin --pass secret info
+```
+
+If credentials are missing, the CLI will prompt interactively.
+
+### Command reference
+
+#### `rf info`
+
+Show a full system summary table.
+
+```bash
+uv run rf info
+```
+
+Output: Rich table with ID, hostname, manufacturer, model, serial, BIOS version, power state, health, RAM (GiB), CPU count, CPU model.
+
+---
+
+#### `rf power`
+
+```bash
+rf power status             # Show current power state
+rf power on                 # ResetType=On
+rf power off                # ResetType=GracefulShutdown
+rf power off --force        # ResetType=ForceOff (immediate — no OS shutdown)
+rf power reset              # ResetType=GracefulRestart (default)
+rf power reset --type <T>   # Any ResetType value
+rf power nmi                # Inject NMI (triggers crash dump)
+```
+
+Valid `--type` values: `On`, `ForceOff`, `GracefulShutdown`, `GracefulRestart`, `ForceRestart`, `Nmi`, `ForceOn`, `PushPowerButton`.
+
+---
+
+#### `rf boot`
+
+```bash
+rf boot status              # Show current boot override settings and allowed values
+rf boot once <target>       # Set one-time boot override
+rf boot once Pxe            # PXE boot on next boot only
+rf boot once Hdd            # Hard drive
+rf boot once BiosSetup      # BIOS setup screen
+rf boot once Pxe --mode UEFI   # Explicit UEFI mode
+rf boot clear               # Clear override, revert to normal boot order
+```
+
+Common `target` values: `None`, `Pxe`, `Hdd`, `Cd`, `Usb`, `BiosSetup`, `UefiShell`. Supported values for your specific BMC are shown by `rf boot status` under "Allowed".
+
+---
+
+#### `rf logs`
+
+```bash
+rf logs list                          # Last 50 SEL entries (default)
+rf logs list --limit 100              # Last 100 entries
+rf logs list --service System         # Different log service
+rf logs clear                         # Prompts for confirmation
+rf logs clear --yes                   # Skip confirmation
+rf logs clear --service AuditLog
+```
+
+---
+
+#### `rf firmware`
+
+```bash
+rf firmware list                        # List all firmware components and versions
+rf firmware update <image-uri>          # Trigger SimpleUpdate from HTTPS URI
+rf firmware update https://fw.example.com/bios-2.1.bin
+rf firmware update <uri> --target /redfish/v1/UpdateService/FirmwareInventory/BIOS
+```
+
+The update command sends `SimpleUpdate` and prints the task URI if the BMC returns one.
+
+---
+
+#### `rf accounts`
+
+```bash
+rf accounts list                        # List all user accounts
+rf accounts create <username>           # Create account (prompts for password)
+rf accounts create operator1 --role Operator
+rf accounts create readonly1 --role ReadOnly
+rf accounts delete <account-uri>        # Prompts for confirmation
+rf accounts delete /redfish/v1/AccountService/Accounts/3/ --yes
+```
+
+---
+
+#### Global options
+
+All commands accept:
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--host` | `-H` | BMC hostname or URL (overrides `RF_HOST`) |
+| `--user` | `-u` | Username (overrides `RF_USER`) |
+| `--pass` | `-p` | Password (overrides `RF_PASS`) |
+| `--no-verify` | | Disable TLS certificate verification |
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+## Python SDK
+
+For anything beyond single-BMC operations — scripting, automation, fleet management — use the `pykesys_redfish` SDK. See [sdk.md](sdk.md) for the full reference.
+
+### Single BMC
+
+```python
+from pykesys_redfish import RedfishClient
+
+with RedfishClient("https://192.168.1.100", "admin", "password") as rf:
+    system = rf.system()
+
+    # Read hardware state
+    print(f"Model:   {system.model}")
+    print(f"Serial:  {system.serial_number}")
+    print(f"BIOS:    {system.bios_version}")
+    print(f"RAM:     {system.total_memory_gib} GiB")
+    print(f"CPUs:    {system.processor_count}x {system.processor_model}")
+    print(f"Power:   {system.power_state}")
+    print(f"Health:  {system.health}")
+
+    # Power operations
+    system.graceful_restart()
+    system.power_off()           # graceful shutdown
+    system.power_off()           # hard power cut (ForceOff)
+
+    # Boot override — PXE on next boot
+    system.set_boot_once("Pxe")
+    system.power_on()
+
+    # Read SEL
+    for entry in system.log_entries():
+        print(f"[{entry['Severity']}] {entry['Created']}: {entry['Message']}")
+
+    # Thermal
+    chassis = rf.chassis()
+    for temp in chassis.temperatures():
+        print(f"{temp['Name']}: {temp.get('ReadingCelsius')}°C")
+```
+
+**Against the emulator:**
+
+```bash
+export RF_HOST=http://localhost:8888/bmc/1
+export RF_USER=admin
+export RF_PASS=redfish
+export RF_VERIFY_SSL=false
+```
+
+```python
+from pykesys_redfish import RedfishClient
+
+with RedfishClient.from_env() as rf:
+    system = rf.system()
+    print(system.summary())
+```
+
+### Fleet operations
+
+```python
+from pykesys_redfish.fleet import FleetManager
+
+# DGX SuperPod — 10 nodes
+fm = FleetManager(
+    hosts=[f"bmc-dgx-{i:02d}.mgmt" for i in range(1, 11)],
+    username="admin",
+    password="password",
+)
+
+# Health check before maintenance window
+summary = fm.health_summary()
+print(f"OK={summary['health_ok']}  "
+      f"Warning={summary['health_warning']}  "
+      f"Critical={summary['health_critical']}  "
+      f"Errors={summary['errors']}")
+
+# Collect full inventory
+results = fm.collect_inventory()
+fm.export_csv(results, "dgx-inventory.csv")
+fm.export_json(results, "dgx-inventory.json")
+
+# PXE boot entire fleet for OS imaging
+def pxe_boot(rf, host):
+    s = rf.system()
+    s.set_boot_once("Pxe")
+    s.power_on() if s.power_state == "Off" else s.graceful_restart()
+    return {"host": host, "status": "pxe triggered"}
+
+fm.run(pxe_boot)
+
+# Graceful shutdown for maintenance
+fm.power_all("GracefulShutdown")
+```
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+## Direct Redfish API (curl)
+
+These examples use `curl` for direct API access — useful for one-off queries, debugging, and shell scripts without a Python environment.
+
+The variable `BMC` is used throughout for brevity:
+
+```bash
+BMC="https://192.168.1.100"
+AUTH="-u admin:password"
+
+# Or use session token (see Authentication below)
+TOKEN="abc123tokenvalue"
+AUTH="-H 'X-Auth-Token: ${TOKEN}'"
+```
+
+For the emulator:
+
+```bash
+BMC="http://localhost:8888/bmc/1"
+AUTH="-u admin:redfish"
+```
+
+### Connecting
+
+The Redfish service root is always at `/redfish/v1/`:
+
+```bash
+curl -k $AUTH ${BMC}/redfish/v1/ | python3 -m json.tool
+```
+
+`-k` skips TLS verification. In production use `--cacert /path/to/bmc-ca.pem`.
+
+A successful response returns `RedfishVersion` and links to top-level collections.
+
+### Authentication
+
+#### HTTP Basic Auth
+
+Suitable for one-off queries and scripts:
+
+```bash
+curl -k -u admin:password ${BMC}/redfish/v1/Systems/1/
+```
+
+#### Session token
+
+Preferred for multi-request workflows — single auth round-trip, lighter BMC load:
+
+```bash
+# Create session — capture X-Auth-Token from response headers
+TOKEN=$(curl -sk -X POST \
   -H "Content-Type: application/json" \
   -d '{"UserName":"admin","Password":"password"}' \
-  https://192.168.1.100/redfish/v1/SessionService/Sessions/ \
-  -D - \
-  -o /dev/null
-```
+  ${BMC}/redfish/v1/SessionService/Sessions/ \
+  -D /dev/stderr -o /dev/null 2>&1 \
+  | grep -i x-auth-token | awk '{print $2}' | tr -d '\r')
 
-Look for `X-Auth-Token` in the response headers and `Location` for the session URI.
+# Use the token on subsequent requests
+curl -k -H "X-Auth-Token: ${TOKEN}" ${BMC}/redfish/v1/Systems/1/
 
-**Use the token:**
-
-```bash
-curl -k \
-  -H "X-Auth-Token: abc123tokenvalue" \
-  https://192.168.1.100/redfish/v1/Systems/1/
-```
-
-**Delete session when done:**
-
-```bash
+# Delete session when done
 curl -k -X DELETE \
-  -H "X-Auth-Token: abc123tokenvalue" \
-  https://192.168.1.100/redfish/v1/SessionService/Sessions/1
+  -H "X-Auth-Token: ${TOKEN}" \
+  ${BMC}/redfish/v1/SessionService/Sessions/1
 ```
 
----
+### Querying system information
 
-## Querying System Information
-
-### List All Systems
+#### System summary
 
 ```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/ | python3 -m json.tool
 ```
 
-Response includes a `Members` array. Each member has an `@odata.id` pointing to a specific system.
+Key fields:
 
-### Get System Summary
-
-```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/
-```
-
-Key fields to look at:
-
-| Field | What It Tells You |
-|-------|------------------|
-| `PowerState` | Whether the server is on/off |
-| `Status.Health` | Aggregate health rollup |
-| `Status.State` | `Enabled`, `Absent`, `Disabled` |
-| `BiosVersion` | Installed BIOS version |
-| `MemorySummary.TotalSystemMemoryGiB` | Total RAM |
-| `ProcessorSummary.Count` | Number of sockets |
+| Field | Description |
+|-------|-------------|
+| `PowerState` | `On`, `Off`, `PoweringOn`, `PoweringOff` |
+| `Status.Health` | `OK`, `Warning`, `Critical` |
+| `BiosVersion` | Running BIOS version |
+| `MemorySummary.TotalSystemMemoryGiB` | Total installed RAM |
+| `ProcessorSummary.Count` | CPU socket count |
 | `ProcessorSummary.Model` | CPU model string |
 | `HostName` | OS-reported hostname |
 | `SerialNumber` | Chassis serial |
-| `SKU` | Vendor SKU/part number |
 
-### Get CPU Details
+#### CPU details
 
 ```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/Processors/
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/Processors/
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/Processors/CPU1/
 ```
 
-Then drill into a specific processor:
+Fields: `TotalCores`, `TotalThreads`, `MaxSpeedMHz`, `ProcessorArchitecture`.
+
+#### Memory (DIMMs)
 
 ```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/Processors/CPU1/
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/Memory/
 ```
 
-Fields include `TotalCores`, `TotalThreads`, `MaxSpeedMHz`, `ProcessorArchitecture`.
+Each DIMM: `CapacityMiB`, `MemoryType` (DDR4/DDR5), `OperatingSpeedMhz`, `Manufacturer`, `PartNumber`, `Status.Health`.
 
-### Get Memory Details
-
-```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/Memory/
-```
-
-Each DIMM entry reports `CapacityMiB`, `MemoryType` (DDR4/DDR5), `OperatingSpeedMhz`, `Manufacturer`, `PartNumber`, and `Status.Health`.
-
-### Get Storage Information
+#### Storage
 
 ```bash
-# Storage controllers
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/Storage/
+# Controllers
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/Storage/
 
-# Drives attached to a controller
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/Storage/RAID1/Drives/
+# Drives on a controller
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/Storage/RAID1/Drives/
 
 # Individual drive
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/Storage/RAID1/Drives/Drive1/
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/Storage/RAID1/Drives/Drive1/
 ```
 
-Drive fields: `CapacityBytes`, `RotationSpeedRPM`, `Protocol` (SAS/SATA/NVMe), `MediaType` (HDD/SSD), `PredictedMediaLifeLeftPercent`, `Status.Health`.
+Drive fields: `CapacityBytes`, `Protocol` (SAS/SATA/NVMe), `MediaType` (HDD/SSD), `PredictedMediaLifeLeftPercent`, `Status.Health`.
 
-### Get Sensor Data (Temperature, Fans, Power)
-
-Sensor data lives under Chassis, not Systems:
+#### Network interfaces
 
 ```bash
-# Thermal sensors (temperatures + fans)
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Chassis/1/Thermal/
-
-# Power supplies and input power
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Chassis/1/Power/
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/EthernetInterfaces/
 ```
 
-The `Temperatures` array includes each probe's `ReadingCelsius`, `UpperThresholdCritical`, and `Status`. The `Fans` array includes `Reading` (RPM or percent) and `Status`. The `PowerSupplies` array includes `LineInputVoltage`, `PowerOutputWatts`, and `Status.Health`.
+### Power operations
 
-### Get Network Interface Info
-
-```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/EthernetInterfaces/
-```
-
----
-
-## Power Operations
-
-Power actions are sent via HTTP POST to the `Actions` sub-resource of a System.
-
-### Check Current Power State
+Power actions POST to `Actions/ComputerSystem.Reset`:
 
 ```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/ | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['PowerState'])"
-```
-
-### Power On
-
-```bash
-curl -k -u admin:password \
-  -X POST \
-  -H "Content-Type: application/json" \
+# Power on
+curl -k $AUTH -X POST -H "Content-Type: application/json" \
   -d '{"ResetType":"On"}' \
-  https://192.168.1.100/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
-```
+  ${BMC}/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
 
-### Graceful Shutdown
-
-Sends an ACPI shutdown signal to the OS. The OS performs a clean shutdown.
-
-```bash
-curl -k -u admin:password \
-  -X POST \
-  -H "Content-Type: application/json" \
+# Graceful shutdown
+curl -k $AUTH -X POST -H "Content-Type: application/json" \
   -d '{"ResetType":"GracefulShutdown"}' \
-  https://192.168.1.100/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
-```
+  ${BMC}/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
 
-### Force Power Off (Hard Power Cut)
-
-Immediately cuts power — equivalent to holding the physical power button.
-
-```bash
-curl -k -u admin:password \
-  -X POST \
-  -H "Content-Type: application/json" \
+# Hard power cut
+curl -k $AUTH -X POST -H "Content-Type: application/json" \
   -d '{"ResetType":"ForceOff"}' \
-  https://192.168.1.100/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
-```
+  ${BMC}/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
 
-### Graceful Restart
-
-```bash
-curl -k -u admin:password \
-  -X POST \
-  -H "Content-Type: application/json" \
+# Graceful restart
+curl -k $AUTH -X POST -H "Content-Type: application/json" \
   -d '{"ResetType":"GracefulRestart"}' \
-  https://192.168.1.100/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
-```
+  ${BMC}/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
 
-### Force Restart (Hard Reset)
-
-```bash
-curl -k -u admin:password \
-  -X POST \
-  -H "Content-Type: application/json" \
+# Hard reset (power cycle — no OS shutdown)
+curl -k $AUTH -X POST -H "Content-Type: application/json" \
   -d '{"ResetType":"ForceRestart"}' \
-  https://192.168.1.100/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
-```
+  ${BMC}/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
 
-### NMI (Non-Maskable Interrupt)
-
-Triggers an NMI, used to generate crash dumps on hung systems.
-
-```bash
-curl -k -u admin:password \
-  -X POST \
-  -H "Content-Type: application/json" \
+# NMI — triggers crash dump on hung systems
+curl -k $AUTH -X POST -H "Content-Type: application/json" \
   -d '{"ResetType":"Nmi"}' \
-  https://192.168.1.100/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
+  ${BMC}/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
 ```
 
-### Valid ResetType Values
+**ResetType reference:**
 
 | ResetType | Effect |
 |-----------|--------|
 | `On` | Power on from off state |
 | `ForceOff` | Immediate power cut |
-| `GracefulShutdown` | ACPI shutdown signal |
-| `GracefulRestart` | ACPI restart signal |
-| `ForceRestart` | Hard reset (power cycle) |
-| `Nmi` | Inject NMI |
+| `GracefulShutdown` | ACPI shutdown signal to OS |
+| `GracefulRestart` | ACPI restart signal to OS |
+| `ForceRestart` | Hard reset (power cycle, no OS notification) |
+| `Nmi` | Inject Non-Maskable Interrupt |
 | `ForceOn` | Force power on even if in error state |
-| `PushPowerButton` | Simulate front-panel button press |
+| `PushPowerButton` | Simulate front-panel button |
 
-Not all values are supported by all implementations. Check `AllowableValues` in the action's `target` property.
+Not all values are supported by all BMC implementations. Check `AllowableValues` in the system's `Actions` object.
 
----
+### Boot override
 
-## Boot Override
-
-Boot override lets you direct the next boot (or all boots) to a specific source without changing persistent BIOS settings.
-
-### View Current Boot Settings
+#### Check current boot settings
 
 ```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/ | python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d['Boot'], indent=2))"
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/ \
+  | python3 -c "import sys,json; d=json.load(sys.stdin); print(json.dumps(d['Boot'], indent=2))"
 ```
-
-Key fields:
 
 | Field | Meaning |
 |-------|---------|
-| `BootSourceOverrideTarget` | Current override target |
+| `BootSourceOverrideTarget` | Active override target |
 | `BootSourceOverrideEnabled` | `Disabled`, `Once`, `Continuous` |
 | `BootSourceOverrideMode` | `Legacy` (BIOS) or `UEFI` |
-| `BootSourceOverrideTarget@Redfish.AllowableValues` | What this system supports |
+| `BootSourceOverrideTarget@Redfish.AllowableValues` | What this BMC supports |
 
-### Set One-Time PXE Boot
+#### Set one-time PXE boot
 
 ```bash
-curl -k -u admin:password \
-  -X PATCH \
-  -H "Content-Type: application/json" \
+curl -k $AUTH -X PATCH -H "Content-Type: application/json" \
   -d '{"Boot":{"BootSourceOverrideTarget":"Pxe","BootSourceOverrideEnabled":"Once"}}' \
-  https://192.168.1.100/redfish/v1/Systems/1/
+  ${BMC}/redfish/v1/Systems/1/
 ```
 
-### Set One-Time Boot from USB
+#### One-time BIOS setup (UEFI mode)
 
 ```bash
-curl -k -u admin:password \
-  -X PATCH \
-  -H "Content-Type: application/json" \
-  -d '{"Boot":{"BootSourceOverrideTarget":"Usb","BootSourceOverrideEnabled":"Once"}}' \
-  https://192.168.1.100/redfish/v1/Systems/1/
+curl -k $AUTH -X PATCH -H "Content-Type: application/json" \
+  -d '{"Boot":{"BootSourceOverrideTarget":"BiosSetup","BootSourceOverrideEnabled":"Once","BootSourceOverrideMode":"UEFI"}}' \
+  ${BMC}/redfish/v1/Systems/1/
 ```
 
-### Set One-Time UEFI Shell Boot
+#### Clear boot override
 
 ```bash
-curl -k -u admin:password \
-  -X PATCH \
-  -H "Content-Type: application/json" \
-  -d '{"Boot":{"BootSourceOverrideTarget":"UefiShell","BootSourceOverrideEnabled":"Once","BootSourceOverrideMode":"UEFI"}}' \
-  https://192.168.1.100/redfish/v1/Systems/1/
-```
-
-### Clear Boot Override (revert to normal)
-
-```bash
-curl -k -u admin:password \
-  -X PATCH \
-  -H "Content-Type: application/json" \
+curl -k $AUTH -X PATCH -H "Content-Type: application/json" \
   -d '{"Boot":{"BootSourceOverrideTarget":"None","BootSourceOverrideEnabled":"Disabled"}}' \
-  https://192.168.1.100/redfish/v1/Systems/1/
+  ${BMC}/redfish/v1/Systems/1/
 ```
 
-### Common BootSourceOverrideTarget Values
+Common target values: `None`, `Pxe`, `Hdd`, `Cd`, `Usb`, `BiosSetup`, `UefiShell`, `UefiHttp`, `RemoteDrive`.
 
-`None`, `Pxe`, `Floppy`, `Cd`, `Usb`, `Hdd`, `BiosSetup`, `Utilities`, `Diags`, `UefiShell`, `UefiTarget`, `SDCard`, `UefiHttp`, `RemoteDrive`
-
----
-
-## Reading System Event Logs
-
-### List Log Services
+### Reading event logs
 
 ```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/LogServices/
+# List available log services
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/LogServices/
+
+# Get SEL entries
+curl -k $AUTH ${BMC}/redfish/v1/Systems/1/LogServices/Sel/Entries/
+
+# Get Manager (BMC) log
+curl -k $AUTH ${BMC}/redfish/v1/Managers/1/LogServices/Log1/Entries/
+
+# Clear SEL
+curl -k $AUTH -X POST -H "Content-Type: application/json" -d '{}' \
+  ${BMC}/redfish/v1/Systems/1/LogServices/Sel/Actions/LogService.ClearLog
 ```
 
-Common log services: `Sel` (System Event Log), `Log1`, `PostCodes`.
+Each log entry has: `Id`, `Created` (ISO 8601), `Severity` (`OK`/`Warning`/`Critical`), `Message`, `MessageId`, `SensorType`, `EntryType`.
 
-### Get Log Entries
+### Sensor data
+
+Sensor data lives under Chassis, not Systems:
 
 ```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/Systems/1/LogServices/Sel/Entries/
+# Temperatures and fans
+curl -k $AUTH ${BMC}/redfish/v1/Chassis/1/Thermal/
+
+# Power supplies and input power
+curl -k $AUTH ${BMC}/redfish/v1/Chassis/1/Power/
 ```
 
-Each entry has:
+`Temperatures[]`: `ReadingCelsius`, `UpperThresholdCritical`, `UpperThresholdNonCritical`, `Status.Health`.
+`Fans[]`: `Reading` (RPM or %), `ReadingUnits`, `Status.Health`.
+`PowerSupplies[]`: `LineInputVoltage`, `PowerOutputWatts`, `Status.Health`.
+`PowerControl[0].PowerConsumedWatts`: total system power draw.
 
-| Field | Meaning |
-|-------|---------|
-| `Id` | Entry ID (monotonically increasing) |
-| `Created` | ISO 8601 timestamp |
-| `Severity` | `OK`, `Warning`, `Critical` |
-| `Message` | Human-readable message |
-| `MessageId` | Registry-qualified ID for machine parsing |
-| `SensorType` | What type of sensor triggered the entry |
-| `EntryType` | `Event`, `SEL`, `Oem` |
+### Identification LED
 
-### Clear Log Entries
+Turn on the physical UID LED to locate a server in a rack:
 
 ```bash
-curl -k -u admin:password \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d '{}' \
-  https://192.168.1.100/redfish/v1/Systems/1/LogServices/Sel/Actions/LogService.ClearLog
+# Blink the UID LED
+curl -k $AUTH -X PATCH -H "Content-Type: application/json" \
+  -d '{"IndicatorLED":"Blinking"}' \
+  ${BMC}/redfish/v1/Systems/1/
+
+# Turn it off
+curl -k $AUTH -X PATCH -H "Content-Type: application/json" \
+  -d '{"IndicatorLED":"Off"}' \
+  ${BMC}/redfish/v1/Systems/1/
 ```
 
----
+Valid values: `Lit`, `Blinking`, `Off`. The chassis also has an IndicatorLED at `/Chassis/1/`.
 
-## Using the Python Redfish SDK
+### Event subscriptions
 
-The DMTF maintains an official Python library: `python-redfish-library`.
+Redfish can push events to a webhook when hardware state changes:
 
 ```bash
-pip install redfish
-```
-
-### Basic Example
-
-```python
-import redfish
-
-# Connect
-client = redfish.redfish_client(
-    base_url="https://192.168.1.100",
-    username="admin",
-    password="password",
-    cacheck=False  # set to True in production with valid certs
-)
-client.login(auth="session")
-
-# Get system info
-response = client.get("/redfish/v1/Systems/1/")
-system = response.dict
-print(f"Power: {system['PowerState']}")
-print(f"Health: {system['Status']['Health']}")
-print(f"BIOS: {system['BiosVersion']}")
-
-# Power on
-client.post(
-    "/redfish/v1/Systems/1/Actions/ComputerSystem.Reset",
-    body={"ResetType": "On"}
-)
-
-# Logout
-client.logout()
-```
-
-### Iterate All Systems
-
-```python
-import redfish
-
-client = redfish.redfish_client(base_url="https://192.168.1.100", username="admin", password="password")
-client.login(auth="session")
-
-systems = client.get("/redfish/v1/Systems/").dict
-for member in systems["Members"]:
-    system = client.get(member["@odata.id"]).dict
-    print(f"{system['Id']}: {system['HostName']} — {system['PowerState']} — {system['Status']['Health']}")
-
-client.logout()
-```
-
----
-
-## Subscribing to Events
-
-Redfish can push events to your endpoint (webhook) when hardware state changes.
-
-### Create an Event Subscription
-
-```bash
-curl -k -u admin:password \
-  -X POST \
-  -H "Content-Type: application/json" \
+# Subscribe
+curl -k $AUTH -X POST -H "Content-Type: application/json" \
   -d '{
     "Destination": "https://your-collector.example.com/redfish-events",
     "Protocol": "Redfish",
     "EventTypes": ["Alert", "ResourceUpdated", "StatusChange"],
-    "Context": "server-rack-A"
+    "Context": "dgx-superpod-rack-A"
   }' \
-  https://192.168.1.100/redfish/v1/EventService/Subscriptions/
+  ${BMC}/redfish/v1/EventService/Subscriptions/
+
+# List subscriptions
+curl -k $AUTH ${BMC}/redfish/v1/EventService/Subscriptions/
+
+# Delete a subscription
+curl -k $AUTH -X DELETE ${BMC}/redfish/v1/EventService/Subscriptions/1
 ```
 
-The response `Location` header contains the subscription URI. Save it to delete the subscription later.
-
-### List Subscriptions
-
-```bash
-curl -k -u admin:password \
-  https://192.168.1.100/redfish/v1/EventService/Subscriptions/
-```
-
-### Delete a Subscription
-
-```bash
-curl -k -u admin:password \
-  -X DELETE \
-  https://192.168.1.100/redfish/v1/EventService/Subscriptions/1
-```
-
----
-
-## Identify/Locate a Server (UID LED)
-
-Turn on the physical identification LED to locate a server in a rack:
-
-```bash
-curl -k -u admin:password \
-  -X PATCH \
-  -H "Content-Type: application/json" \
-  -d '{"IndicatorLED": "Blinking"}' \
-  https://192.168.1.100/redfish/v1/Systems/1/
-```
-
-Turn it off:
-
-```bash
-curl -k -u admin:password \
-  -X PATCH \
-  -H "Content-Type: application/json" \
-  -d '{"IndicatorLED": "Off"}' \
-  https://192.168.1.100/redfish/v1/Systems/1/
-```
-
-Valid values: `Lit`, `Blinking`, `Off`.
+[↑ Back to Top](#table-of-contents)
 
 ---
 
 ## Scripting Patterns
 
-### Poll for Power State After Reset
+### Poll for power state after a reset (SDK)
 
 ```python
-import redfish, time
+import time
+from pykesys_redfish import RedfishClient
 
-def wait_for_power_state(client, system_uri, target_state, timeout=300):
+def wait_for_power_state(rf, target: str, timeout: int = 300) -> bool:
     deadline = time.time() + timeout
+    system = rf.system()
     while time.time() < deadline:
-        state = client.get(system_uri).dict.get("PowerState")
+        system.refresh()
+        state = system.power_state
         print(f"  PowerState: {state}")
-        if state == target_state:
+        if state == target:
             return True
         time.sleep(10)
     return False
 
-client = redfish.redfish_client(base_url="https://192.168.1.100", username="admin", password="password")
-client.login(auth="session")
-
-client.post("/redfish/v1/Systems/1/Actions/ComputerSystem.Reset", body={"ResetType": "GracefulShutdown"})
-if wait_for_power_state(client, "/redfish/v1/Systems/1/", "Off"):
-    print("Server is off")
-else:
-    print("Timeout waiting for shutdown")
-
-client.logout()
+with RedfishClient("https://192.168.1.100", "admin", "password") as rf:
+    rf.system().graceful_shutdown()
+    if wait_for_power_state(rf, "Off"):
+        print("Server is off")
+    else:
+        print("Timeout waiting for shutdown — trying ForceOff")
+        rf.system().power_off()
 ```
 
-### Collect Inventory Across a Fleet
+### Fleet health check before maintenance
 
 ```python
-import redfish, csv, sys
+from pykesys_redfish.fleet import FleetManager
 
-hosts = ["192.168.1.100", "192.168.1.101", "192.168.1.102"]
-writer = csv.DictWriter(sys.stdout, fieldnames=["host", "serial", "bios", "ram_gib", "cpus", "health"])
-writer.writeheader()
+fm = FleetManager(
+    hosts=[f"bmc-dgx-{i:02d}.mgmt" for i in range(1, 11)],
+    username="admin",
+    password="password",
+)
+summary = fm.health_summary()
 
-for host in hosts:
-    try:
-        c = redfish.redfish_client(base_url=f"https://{host}", username="admin", password="password")
-        c.login(auth="session")
-        s = c.get("/redfish/v1/Systems/1/").dict
-        writer.writerow({
-            "host": host,
-            "serial": s.get("SerialNumber"),
-            "bios": s.get("BiosVersion"),
-            "ram_gib": s.get("MemorySummary", {}).get("TotalSystemMemoryGiB"),
-            "cpus": s.get("ProcessorSummary", {}).get("Count"),
-            "health": s.get("Status", {}).get("Health"),
-        })
-        c.logout()
-    except Exception as e:
-        print(f"ERROR {host}: {e}", file=sys.stderr)
+if summary["health_critical"] > 0 or summary["errors"] > 0:
+    print("⚠  Fleet not healthy — do not proceed with maintenance")
+    for host in summary["error_hosts"]:
+        print(f"  ERROR: {host}")
+else:
+    print(f"✓  Fleet healthy ({summary['total']} nodes, {summary['health_ok']} OK)")
 ```
+
+### Collect and export inventory
+
+```python
+from pykesys_redfish.fleet import FleetManager
+
+fm = FleetManager(hosts=[...], username="admin", password="password")
+results = fm.collect_inventory()
+fm.export_csv(results, "inventory.csv")
+fm.export_json(results, "inventory.json")
+
+failed = [r for r in results if "error" in r]
+if failed:
+    print(f"{len(failed)} hosts failed:")
+    for r in failed:
+        print(f"  {r['host']}: {r['error']}")
+```
+
+### Poll for power state after a reset (curl / bash)
+
+```bash
+BMC="https://192.168.1.100"
+AUTH="-u admin:password"
+
+# Send graceful shutdown
+curl -sk $AUTH -X POST -H "Content-Type: application/json" \
+  -d '{"ResetType":"GracefulShutdown"}' \
+  ${BMC}/redfish/v1/Systems/1/Actions/ComputerSystem.Reset
+
+# Poll until Off
+for i in $(seq 1 30); do
+    STATE=$(curl -sk $AUTH ${BMC}/redfish/v1/Systems/1/ | python3 -c "import sys,json; print(json.load(sys.stdin)['PowerState'])")
+    echo "  PowerState: $STATE"
+    [ "$STATE" = "Off" ] && echo "Server is off" && break
+    sleep 10
+done
+```
+
+### Register a host in the web app and trigger a poll
+
+```bash
+# Add the host
+HOST_ID=$(curl -s -X POST http://localhost:8000/api/hosts/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "host": "bmc-dgx-01.mgmt",
+    "display_name": "DGX Node 01",
+    "username": "admin",
+    "password": "secret",
+    "poll_interval": 60,
+    "verify_ssl": false
+  }' | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+
+echo "Created host ID: $HOST_ID"
+
+# Trigger immediate poll
+curl -s -X POST "http://localhost:8000/api/hosts/${HOST_ID}/poll/"
+```
+
+[↑ Back to Top](#table-of-contents)
 
 ---
 
@@ -576,33 +840,55 @@ for host in hosts:
 
 ### 401 Unauthorized
 
-- Verify username/password are correct.
-- Check account lockout: too many failed attempts may lock the account temporarily.
-- Confirm the account has sufficient privileges for the operation.
+- Verify username and password.
+- Account lockout: too many failed attempts may lock the account temporarily.
+- Check that the account has sufficient privileges for the requested operation.
 
 ### 403 Forbidden
 
-- The authenticated account exists but lacks permission for this resource or action.
-- Check with an admin to confirm your role assignment.
+- The account exists but its role does not permit this operation.
+- `Operator` accounts cannot perform account management.
+- `ReadOnly` accounts cannot perform any write operations.
 
 ### 404 Not Found
 
-- The URI may differ between vendors. Retrieve the service root and traverse links rather than constructing URIs by hand.
-- The resource (e.g., a specific Drive) may have been removed.
+- URI formats vary between vendors. Retrieve the service root and traverse `@odata.id` links rather than guessing URIs.
+- The resource may not exist on this specific BMC implementation.
 
-### SSL/TLS Errors
+### SSL/TLS errors
 
-- BMC uses a self-signed certificate by default. Use `--cacert` with the exported BMC CA, or `-k` during development only.
-- Verify the BMC's time is synchronized — certificate validation failures are often caused by clock skew.
+- BMCs use self-signed certificates by default. Use `--cacert` with the exported BMC CA cert, or `-k` during development only.
+- Clock skew causes certificate validation failures. Verify NTP is configured correctly.
+- For the SDK: pass `verify_ssl=False` only in development environments.
 
-### 500 Internal Server Error
+### RedfishTimeoutError
 
-- The BMC may be busy or in a transient error state.
-- Wait 30–60 seconds and retry.
-- Check the Manager log for BMC-side errors.
+- The BMC may be busy, booting, or running a firmware update.
+- Increase the timeout: `RedfishClient(..., timeout=60.0)`.
+- The BMC management processor can be slow to respond during POST or under heavy polling.
 
-### Slow Responses
+### RedfishConflictError (409)
 
-- Redfish on BMCs is resource-constrained. Avoid parallel requests to the same BMC.
-- Add a short delay (0.5–1s) between sequential requests in scripts.
+- Attempting to power on a system that is already `On`, or power off a system that is already `Off`.
+- Attempting to create an account that already exists.
+- Catch this exception and treat it as a no-op for idempotent scripts.
+
+### 500 / 503
+
+- BMC may be temporarily overloaded. Wait 30–60 seconds and retry.
+- A BMC reset may be in progress.
+- Check the Manager log for BMC-side error details.
+
+### Web app shows "last_error" for a host
+
+- Click the host in the dashboard and check `last_error`.
+- Common causes: BMC unreachable (network issue), wrong credentials, SSL certificate error.
+- Use `./run-dashboard.sh dev` + check Django server logs, or trigger `POST /api/hosts/{id}/poll/` and inspect the response.
+
+### Slow CLI / SDK responses
+
+- BMC management processors are resource-constrained. Add a short delay between sequential requests in loops.
+- Avoid parallel requests to the same BMC — most BMCs serialize concurrent Redfish requests internally.
 - Session auth is lighter than Basic Auth for repeated requests.
+
+[↑ Back to Top](#table-of-contents)
