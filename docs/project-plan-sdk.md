@@ -1,10 +1,32 @@
 # pykesys-redfish SDK — Project Plan & Milestones
 
+
+[↑ Back to Top](#table-of-contents)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Milestone v0.1 — Foundation ✅ (Delivered)](#milestone-v01--foundation--delivered)
+- [Milestone v0.2 — Async Support & Performance](#milestone-v02--async-support--performance)
+- [Milestone v0.3 — Extended Resource Coverage](#milestone-v03--extended-resource-coverage)
+- [Milestone v0.4 — CLI Enhancements & Fleet-Level Commands](#milestone-v04--cli-enhancements--fleet-level-commands)
+- [Milestone v0.5 — Observability Integrations & Exporter](#milestone-v05--observability-integrations--exporter)
+- [Backlog / Out of Scope for Now](#backlog--out-of-scope-for-now)
+- [Dependency Map](#dependency-map)
+
+---
+
+
+[↑ Back to Top](#table-of-contents)
+
 ## Overview
 
 `pykesys-redfish` is a Python SDK, CLI, and fleet automation library for the DMTF Redfish BMC management API. This document tracks delivered milestones and planned enhancement phases.
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Milestone v0.1 — Foundation ✅ (Delivered)
 
@@ -27,6 +49,9 @@
 - `FleetManager.collect_inventory()` documented and tested
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Milestone v0.2 — Async Support & Performance
 
@@ -56,6 +81,9 @@ src/pykesys_redfish/
 - `uv run pytest` all green including new async tests
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Milestone v0.3 — Extended Resource Coverage
 
@@ -112,6 +140,9 @@ src/pykesys_redfish/cli/commands/
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Milestone v0.4 — CLI Enhancements & Fleet-Level Commands
 
 **Goal:** Make `rf` the primary daily-driver for operators. Add fleet-wide CLI operations and richer output.
@@ -156,6 +187,9 @@ src/pykesys_redfish/cli/
 - `rf shell` enters and exits cleanly in tests
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Milestone v0.5 — Observability Integrations & Exporter
 
@@ -212,6 +246,9 @@ metrics = ["prometheus-client>=0.21"]
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Backlog / Out of Scope for Now
 
 - Windows PowerShell module wrapper
@@ -221,6 +258,9 @@ metrics = ["prometheus-client>=0.21"]
 - Swordfish (storage-focused Redfish extension) resources
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Dependency Map
 

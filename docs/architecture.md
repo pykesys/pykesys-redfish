@@ -1,5 +1,26 @@
 # pykesys-redfish — Architecture Document
 
+
+[↑ Back to Top](#table-of-contents)
+
+## Table of Contents
+
+- [1. System Overview](#1-system-overview)
+- [2. Repository Layout](#2-repository-layout)
+- [3. SDK Architecture](#3-sdk-architecture-srcpykesys_redfish)
+- [4. Django Application Architecture](#4-django-application-architecture-redfish_web)
+- [5. Frontend Architecture](#5-frontend-architecture-frontend)
+- [6. Technology Stack](#6-technology-stack)
+- [7. Key Design Decisions](#7-key-design-decisions)
+- [8. Deployment Topologies](#8-deployment-topologies)
+- [9. Security Considerations](#9-security-considerations)
+- [10. Cross-Cutting Concerns](#10-cross-cutting-concerns)
+
+---
+
+
+[↑ Back to Top](#table-of-contents)
+
 ## 1. System Overview
 
 pykesys-redfish is a layered system for managing and observing server hardware via the DMTF Redfish standard. It is organized into two independently usable layers that share a common SDK core.
@@ -32,6 +53,9 @@ pykesys-redfish is a layered system for managing and observing server hardware v
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 2. Repository Layout
 
 ```
@@ -60,6 +84,9 @@ pykesys-redfish/
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 3. SDK Architecture (`src/pykesys_redfish/`)
 
@@ -176,6 +203,9 @@ FleetManager
 Error isolation: each host runs in its own thread with its own client. A failure on one host never affects others — it returns `{"host": "…", "error": "…"}` and the rest continue.
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 4. Django Application Architecture (`redfish_web/`)
 
@@ -322,6 +352,9 @@ All endpoints served by Django REST Framework. All responses are JSON. Paginatio
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 5. Frontend Architecture (`frontend/`)
 
 ### 5.1 Component Tree
@@ -390,6 +423,9 @@ Production:
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 6. Technology Stack
 
 | Layer | Technology | Rationale |
@@ -413,6 +449,9 @@ Production:
 | Package index | `pypi.apple.com` | Apple internal mirror; required for proxy-gated environments |
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 7. Key Design Decisions
 
@@ -454,6 +493,9 @@ BMC credentials in `BMCHost.password` are stored as-is in the database. This is 
 - Store credentials in an external vault and resolve them at poll time
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 8. Deployment Topologies
 
@@ -507,6 +549,9 @@ The SDK has no Django dependency and can be used entirely standalone.
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 9. Security Considerations
 
 | Concern | Current State | Recommended Hardening |
@@ -520,6 +565,9 @@ The SDK has no Django dependency and can be used entirely standalone.
 | CSRF | Django CSRF middleware enabled | React SPA must include `X-CSRFToken` header on POST/PATCH/DELETE (v0.3) |
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 10. Cross-Cutting Concerns
 

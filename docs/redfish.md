@@ -1,10 +1,35 @@
 # Redfish: Overview and Architecture
 
+
+[↑ Back to Top](#table-of-contents)
+
+## Table of Contents
+
+- [What Is Redfish?](#what-is-redfish)
+- [Core Design Principles](#core-design-principles)
+- [Protocol Stack](#protocol-stack)
+- [Resource Model](#resource-model)
+- [Key Resource Types](#key-resource-types)
+- [OData Annotations](#odata-annotations)
+- [Versioning](#versioning)
+- [Transport and Security](#transport-and-security)
+- [Specification Documents](#specification-documents)
+- [Vendor Implementations](#vendor-implementations)
+- [Related Documentation](#related-documentation)
+
+---
+
+
+[↑ Back to Top](#table-of-contents)
+
 ## What Is Redfish?
 
 Redfish is a RESTful API standard developed and maintained by the Distributed Management Task Force (DMTF) for out-of-band management of servers, storage, and networking equipment. It was designed as a modern replacement for the aging IPMI (Intelligent Platform Management Interface) protocol, addressing IPMI's scalability, security, and usability deficiencies.
 
 First published in 2015 as DMTF DSP0266, Redfish provides a secure, standardized, machine-readable interface that enables datacenter operators and automation tooling to manage heterogeneous hardware at scale without vendor-specific agents or protocols.
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Core Design Principles
 
@@ -14,6 +39,9 @@ First published in 2015 as DMTF DSP0266, Redfish provides a secure, standardized
 - **Schema-backed**: Every resource type has a versioned schema. Clients and tools can validate payloads against published schemas.
 - **Secure by default**: Transport is HTTPS only. Authentication options include HTTP Basic Auth, session tokens, and API keys.
 - **Eventing**: Redfish supports push-based event delivery via Server-Sent Events (SSE) and HTTP POST callbacks, enabling real-time monitoring without polling.
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Protocol Stack
 
@@ -32,6 +60,9 @@ First published in 2015 as DMTF DSP0266, Redfish provides a secure, standardized
 │            Hardware / Firmware               │
 └─────────────────────────────────────────────┘
 ```
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Resource Model
 
@@ -81,6 +112,9 @@ The Redfish data model is organized as a tree of resource collections and single
 └── Boot/
 ```
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Key Resource Types
 
 ### ComputerSystem
@@ -108,6 +142,9 @@ Represents the BMC itself. Exposes:
 - `EthernetInterfaces/`: BMC NIC configuration (IP, VLAN, DNS)
 - `LogServices/`: BMC event log
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## OData Annotations
 
 All Redfish responses include OData v4 annotations:
@@ -119,6 +156,9 @@ All Redfish responses include OData v4 annotations:
 | `@odata.context` | URI to the JSON-LD context / schema definition |
 | `@odata.etag` | ETag for optimistic concurrency on PATCH |
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Versioning
 
 Redfish uses semantic versioning for both the API (`/redfish/v1/`) and individual resource schemas. The schema version is embedded in `@odata.type`:
@@ -129,6 +169,9 @@ Redfish uses semantic versioning for both the API (`/redfish/v1/`) and individua
 
 Clients should program against a minimum schema version and handle additional properties gracefully (unknown properties must be ignored per the spec).
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Transport and Security
 
 - **HTTPS required**: HTTP is permitted only for initial redirect to HTTPS. Plaintext access must be disabled in production.
@@ -138,6 +181,9 @@ Clients should program against a minimum schema version and handle additional pr
   - HTTP Basic Auth (stateless, per-request credential)
   - Session-based auth (`/redfish/v1/SessionService/Sessions/`) — returns an `X-Auth-Token` header
   - API keys (implementation-dependent, common in OpenBMC)
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Specification Documents
 
@@ -152,6 +198,9 @@ Clients should program against a minimum schema version and handle additional pr
 
 All documents are freely available at [https://www.dmtf.org/standards/redfish](https://www.dmtf.org/standards/redfish).
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Vendor Implementations
 
 | Vendor | BMC Product | Notes |
@@ -163,6 +212,9 @@ All documents are freely available at [https://www.dmtf.org/standards/redfish](h
 | Intel | Intel BMC | Deprecated; now OpenBMC-based |
 | OpenBMC | open-source | Community/OEM build; powers Meta, Google, and cloud-scale hardware |
 | Ampere | Ampere BMC | ARM server; OpenBMC-based |
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Related Documentation
 

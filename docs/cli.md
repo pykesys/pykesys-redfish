@@ -1,10 +1,25 @@
 # CLI Reference — `rf`
 
+
+[↑ Back to Top](#table-of-contents)
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Global Options](#global-options)
+- [Commands](#commands)
+- [Scripting Tips](#scripting-tips)
+
+---
+
 The `rf` command provides interactive and scriptable access to Redfish BMCs from the terminal. Output is formatted with Rich tables and color-coded health/power states.
 
 See [sdk.md](sdk.md) for programmatic access and [guide-users.md](guide-users.md) for curl-based examples.
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Installation
 
@@ -21,6 +36,9 @@ rf --help
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Global Options
 
@@ -45,6 +63,9 @@ rf power status
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Commands
 
@@ -269,6 +290,9 @@ rf accounts delete /redfish/v1/AccountService/Accounts/3 \
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Scripting Tips
 

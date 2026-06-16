@@ -8,6 +8,22 @@
 
 ## pykesys-redfish Session Arcs
 
+### 2026-06-16 — Session 2: Full Build + Ladder + Cascade
+
+**What arrived through the work:**
+
+1. **Path-prefix base URL is a zero-cost abstraction** — extracting the path segment from `base_url` in `RedfishSession.__init__` and prepending it with `_p(uri)` costs nothing at runtime. The existing unit tests pass unchanged because `_path_prefix = ""` for bare hostnames. The multi-node emulator needed it; the existing API got it for free.
+
+2. **FastAPI TestClient bypasses the proxy layer entirely** — when the corporate proxy blocks all localhost TCP (even `trust_env=False` httpx still routes through the OS socket layer that the proxy intercepts), `TestClient` works because it never opens a socket at all. The WSGI/ASGI app is called as a Python function. This is the right tool for in-process smoke testing in proxy-gated environments.
+
+3. **LAW 1 violation was silent for a full session** — `docs/prompts.md` was never created in Session 1 even though CLAUDE.md explicitly names it. No test caught it. The ladder caught it. This is exactly the class of drift the ladder was built to find: not broken code, broken process. The ladder is not redundant with the test suite — it guards a different surface.
+
+4. **`str(None)` is truthy and coalesces wrong** — `str(None) = "None"` is truthy, so `str(None) or "—"` returns `"None"` not `"—"`. The fix requires coercing None before stringifying: `str(r.get("field") or "—")`. A class of output bug invisible to type checkers.
+
+5. **The emulator's control API is more valuable than the Redfish API** — `/sim/scenario` and `/sim/nodes/{id}/sel-event` turn a static mock into a scenario engine. The difference is between testing that the SDK *can* read health state and testing that the web app *responds correctly when health changes*. The latter is end-to-end; the former is a unit test with extra latency.
+
+---
+
 ### 2026-06-11 — Session 1: Constitutional Adoption + Bug Scan
 
 **What arrived through the work:**

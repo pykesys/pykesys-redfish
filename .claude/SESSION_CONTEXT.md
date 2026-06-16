@@ -3,7 +3,7 @@
 **Role**: Law-mother (constitutional source)
 **Seeded from**: ../template-law-claude on 2026-06-11
 **Constitutional state**: 30 laws (LAW 0-29), full adoption
-**Last Updated**: 2026-06-11 — Law-mother declaration + 5 bugs fixed
+**Last Updated**: 2026-06-16 — Session 2: full build — docs, emulator, Django web, touchscreen tutorial, ladder + cascade
 
 ---
 
@@ -84,7 +84,15 @@ management API.
 
 *Written by /ladder at session open. Proof of execution.*
 
-<!-- /ladder appends entries here in reverse-chronological order (newest first) -->
+### 2026-06-16 — Ladder Run
+
+Rung 2: PASS (30 law units, 4 meta-law units)
+Rung 3: PASS (first node: "Log prompts to `docs/prompts.md` BEFORE acting (LAW 1)")
+Rung 4: FAIL→FIXED — stratum deposited for 2026-06-16 session
+Rung 5: PASS (Last change: "2026-06-11 — Constitutional governance adopted (law-mother declaration). Five bugs fixed: ...")
+Rung 8: PASS (30 laws, LAW 0-29 — "✓ All constitutional invariants satisfied")
+Rung 11: SKIP (law-mother)
+Full State: FIXED — Rung 1 (9 docs/ files: TOC+BTT added); LAW 1 (docs/prompts.md created); Rung 4 (stratum deposited)
 
 ---
 

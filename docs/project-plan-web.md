@@ -1,10 +1,32 @@
 # redfish_web Django Observability App — Project Plan & Milestones
 
+
+[↑ Back to Top](#table-of-contents)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Milestone v0.1 — Foundation ✅ (Delivered)](#milestone-v01--foundation--delivered)
+- [Milestone v0.2 — Historical Trending & Charts](#milestone-v02--historical-trending--charts)
+- [Milestone v0.3 — Authentication, RBAC & Audit Log](#milestone-v03--authentication-rbac--audit-log)
+- [Milestone v0.4 — Firmware Management Center](#milestone-v04--firmware-management-center)
+- [Milestone v0.5 — Bulk Operations, Grouping & Maintenance Windows](#milestone-v05--bulk-operations-grouping--maintenance-windows)
+- [Backlog / Out of Scope for Now](#backlog--out-of-scope-for-now)
+- [Dependency Map](#dependency-map)
+
+---
+
+
+[↑ Back to Top](#table-of-contents)
+
 ## Overview
 
 `redfish_web` is a Django + React SPA observability platform for Redfish-managed BMC fleets. It provides a fleet dashboard, per-host hardware detail, background polling, and alert notifications. This document tracks delivered milestones and planned enhancement phases.
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Milestone v0.1 — Foundation ✅ (Delivered)
 
@@ -33,6 +55,9 @@
 - `runserver` + `npm run dev` → fleet dashboard visible at `localhost:5173`
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Milestone v0.2 — Historical Trending & Charts
 
@@ -81,6 +106,9 @@ package.json: "recharts": "^2.13"
 - HistoryChart renders without error when given an empty dataset
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Milestone v0.3 — Authentication, RBAC & Audit Log
 
@@ -146,6 +174,9 @@ frontend/src/
 - Login page renders and submits without CSRF errors
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Milestone v0.4 — Firmware Management Center
 
@@ -216,6 +247,9 @@ frontend/src/pages/
 - Firmware page renders compliance matrix without error on empty data
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Milestone v0.5 — Bulk Operations, Grouping & Maintenance Windows
 
@@ -302,6 +336,9 @@ frontend/src/components/
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Backlog / Out of Scope for Now
 
 - Multi-cluster / multi-datacenter aggregation (separate deployment per datacenter, unified dashboard TBD)
@@ -312,6 +349,9 @@ frontend/src/components/
 - Export to PDF / Excel
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Dependency Map
 

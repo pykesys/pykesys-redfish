@@ -1,10 +1,33 @@
 # Quick Start — Docker Compose
 
+
+[↑ Back to Top](#table-of-contents)
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [1 — Clone and enter the repo](#1--clone-and-enter-the-repo)
+- [2 — Build the React SPA (one-time)](#2--build-the-react-spa-one-time)
+- [3 — Start the stack](#3--start-the-stack)
+- [4 — Verify everything is up](#4--verify-everything-is-up)
+- [5 — Try the Sim control API](#5--try-the-sim-control-api)
+- [6 — Create an alert rule](#6--create-an-alert-rule)
+- [7 — Try the CLI against the emulator](#7--try-the-cli-against-the-emulator)
+- [8 — Add a real BMC host (optional)](#8--add-a-real-bmc-host-optional)
+- [Common Docker Compose Operations](#common-docker-compose-operations)
+- [Services at a Glance](#services-at-a-glance)
+- [Next Steps](#next-steps)
+
+---
+
 This guide gets the full pykesys-redfish stack running in under 5 minutes using Docker Compose. You will have a live fleet dashboard, 10 emulated BMC nodes, background polling, and alert evaluation — no physical hardware required.
 
 For non-Docker setup see [guide-admin.md — Local development](guide-admin.md#local-development).
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Prerequisites
 
@@ -16,6 +39,9 @@ For non-Docker setup see [guide-admin.md — Local development](guide-admin.md#l
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 1 — Clone and enter the repo
 
 ```bash
@@ -24,6 +50,9 @@ cd pykesys-redfish
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 2 — Build the React SPA (one-time)
 
@@ -39,6 +68,9 @@ cd ..
 > Skip this if you only want the API and don't need the web UI. Django still works without it.
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 3 — Start the stack
 
@@ -69,6 +101,9 @@ docker compose logs -f web      # follow only web logs
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 4 — Verify everything is up
 
 ```bash
@@ -86,6 +121,9 @@ Open the dashboard: **http://localhost:8000**
 You should see a 10-node grid, all green (health OK, power On).
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 5 — Try the Sim control API
 
@@ -120,6 +158,9 @@ curl -X POST http://localhost:8888/sim/reset
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 6 — Create an alert rule
 
@@ -158,6 +199,9 @@ The Alerts page at **http://localhost:8000/alerts** should show the open event.
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 7 — Try the CLI against the emulator
 
 ```bash
@@ -181,6 +225,9 @@ uv run rf logs list
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 8 — Add a real BMC host (optional)
 
 If you have a real BMC on your network, register it alongside the emulator nodes:
@@ -202,6 +249,9 @@ curl -X POST http://localhost:8000/api/hosts/ \
 The web app will start polling it on the next scheduler cycle (within 60 seconds).
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Common Docker Compose Operations
 
@@ -241,6 +291,9 @@ docker compose -f docker-compose.ci.yml up \
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Services at a Glance
 
 | URL | What you'll find |
@@ -256,6 +309,9 @@ docker compose -f docker-compose.ci.yml up \
 | `http://localhost:8888/sim/scenarios/` | Available scenarios |
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Next Steps
 

@@ -1,10 +1,28 @@
 # Fleet Automation Guide
 
+
+[↑ Back to Top](#table-of-contents)
+
+## Table of Contents
+
+- [FleetManager](#fleetmanager)
+- [Methods](#methods)
+- [Standalone Functions](#standalone-functions)
+- [Full Example: Nightly Inventory Report](#full-example-nightly-inventory-report)
+- [Example: Mass PXE Boot + Reset](#example-mass-pxe-boot--reset)
+- [Example: Health Alert Integration](#example-health-alert-integration)
+- [Performance Notes](#performance-notes)
+
+---
+
 The `pykesys_redfish.fleet` module extends the single-BMC SDK to operate across a fleet of BMCs concurrently. It is designed for datacenter automation tasks: inventory collection, bulk power operations, health monitoring, and reporting.
 
 See [sdk.md](sdk.md) for single-BMC usage and [guide-admin.md](guide-admin.md) for operator context.
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## FleetManager
 
@@ -37,6 +55,9 @@ Each worker gets its own `RedfishClient` instance with its own session. Failed h
 | `base_url_scheme` | `"https"` | Scheme prepended to bare hostnames |
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Methods
 
@@ -148,6 +169,9 @@ The function receives a connected `RedfishClient` and the host string. It must r
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Standalone Functions
 
 These are also importable directly if you want to use them outside of `FleetManager`:
@@ -163,6 +187,9 @@ from pykesys_redfish.fleet import (
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Full Example: Nightly Inventory Report
 
@@ -197,6 +224,9 @@ if summary["error_hosts"]:
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Example: Mass PXE Boot + Reset
 
 ```python
@@ -225,6 +255,9 @@ for r in results:
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Example: Health Alert Integration
 
 ```python
@@ -244,6 +277,9 @@ for host_data in critical:
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Performance Notes
 

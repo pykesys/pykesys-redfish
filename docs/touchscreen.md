@@ -4,6 +4,9 @@ A complete guide to building a C++ command-deck application for the ViewSonic TD
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Table of Contents
 
 - [1. Hardware Overview — ViewSonic TD2423D](#1-hardware-overview--viewsonic-td2423d)
@@ -49,6 +52,9 @@ A complete guide to building a C++ command-deck application for the ViewSonic TD
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 1. Hardware Overview — ViewSonic TD2423D
 
 The TD2423D is a 24-inch FHD industrial-grade touchscreen monitor designed for kiosk and control-panel applications.
@@ -83,6 +89,9 @@ It creates two `/dev/input/event*` nodes:
 The video signal arrives separately over HDMI/DP and appears as a standard DRM/KMS connector — the display and touch are logically separate subsystems that you marry in software.
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 2. Linux Input Stack Architecture
 
@@ -133,6 +142,9 @@ Key event codes for Type B:
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 3. Device Discovery and Setup
 
 ### Find the touch device
@@ -176,6 +188,9 @@ ls -la /dev/input/event4
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 4. Raw evdev Programming in C++
 
@@ -425,6 +440,9 @@ float to_mm_y(float norm_y) { return norm_y * 296.0f; }
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 5. libinput in C++
 
 libinput sits above evdev and provides policy features: palm rejection, finger tracking, gesture recognition, and a unified event model. It is the recommended path for most applications.
@@ -626,6 +644,9 @@ libinput_device_config_calibration_set_matrix(device, matrix);
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 6. Keyboard Input
 
 The keyboard appears as a separate `/dev/input/event*` device. Use the same evdev mechanism:
@@ -671,6 +692,9 @@ done
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 7. Unified Input Loop with epoll
 
@@ -777,6 +801,9 @@ private:
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 8. Multi-Touch Gesture Recognition
 
@@ -987,6 +1014,9 @@ private:
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 9. Display Output — DRM/KMS
 
 For a standalone C++ application without a compositor (X11/Wayland), use DRM/KMS directly. This is the right approach for a dedicated command deck that owns the display.
@@ -1147,6 +1177,9 @@ int main() {
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 10. OpenGL / EGL on DRM/KMS
 
 For a proper command-deck UI with hardware-accelerated rendering, use OpenGL via EGL and GBM. This is the professional path and enables CUDA interop.
@@ -1283,6 +1316,9 @@ void render_frame(float touch_x, float touch_y) {
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 11. SDL2 as a Higher-Level Alternative
 
 If you do not need bare-metal DRM/KMS control, SDL2 wraps the entire display + input stack and works on DRM/KMS natively (without X11/Wayland) when compiled with `SDL_VIDEO_DRIVER=kmsdrm`.
@@ -1361,6 +1397,9 @@ private:
 SDL2 touch coordinates are normalized [0,1] in `e.tfinger.x/y`. Multiply by screen dimensions to get pixels.
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 12. DDC/CI Display Control
 
@@ -1524,6 +1563,9 @@ bool set_vcp_value(int fd, uint8_t vcp_code, uint16_t value) {
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 13. CUDA / OpenGL Interop
 
 For the ML training context — visualizing inference results, sensor data, or training metrics — CUDA can write directly into OpenGL textures or Vulkan images, which are then composited into the command-deck UI with zero CPU copies.
@@ -1643,6 +1685,9 @@ For a more modern pipeline (zero-copy, timeline semaphores):
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 14. Application Architecture — Command Deck
 
 A production command-deck combining all components:
@@ -1708,6 +1753,9 @@ private:
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 15. udev Rules and Permissions
 
 Create `/etc/udev/rules.d/99-touchscreen.rules`:
@@ -1735,6 +1783,9 @@ sudo udevadm trigger
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 16. Calibration and Coordinate Mapping
 
@@ -1806,6 +1857,9 @@ std::array<float,6> compute_calibration_matrix(
 ```
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## 17. CMake Build System
 
@@ -1907,6 +1961,9 @@ cmake --build build -j$(nproc)
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## 18. Troubleshooting
 
 ### Touch not detected
@@ -2001,6 +2058,9 @@ strace -e trace=epoll_wait,read -p $(pidof command_deck) 2>&1 | head -20
 
 ---
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Appendix A — Acronym Glossary
 
 All acronyms and initialisms used in this document, in alphabetical order.
@@ -2067,6 +2127,9 @@ All acronyms and initialisms used in this document, in alphabetical order.
 | **XOR** | eXclusive OR | A bitwise operation used in the DDC/CI packet checksum calculation |
 
 ---
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Appendix B — Software, Drivers & Reference Links
 

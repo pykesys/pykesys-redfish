@@ -1,8 +1,35 @@
 # run-dashboard.sh
 
+
+[↑ Back to Top](#table-of-contents)
+
+## Table of Contents
+
+- [Name](#name)
+- [Synopsis](#synopsis)
+- [Description](#description)
+- [Commands](#commands)
+- [Interactive menu](#interactive-menu)
+- [Environment variables](#environment-variables)
+- [Service URLs](#service-urls)
+- [Background service management](#background-service-management)
+- [Interactive pytest runner](#interactive-pytest-runner-menu-option-13)
+- [Logging](#logging)
+- [Examples](#examples)
+- [Exit codes](#exit-codes)
+- [See also](#see-also)
+
+---
+
+
+[↑ Back to Top](#table-of-contents)
+
 ## Name
 
 `run-dashboard.sh` — interactive development launcher for the pykesys-redfish stack
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Synopsis
 
@@ -10,11 +37,17 @@
 ./run-dashboard.sh [command]
 ```
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Description
 
 `run-dashboard.sh` is the primary development launcher for pykesys-redfish. It provides an interactive numbered menu for starting and stopping the three project services (Django, React frontend, Redfish emulator), running tests, and managing Docker Compose. It can also be driven non-interactively by passing a command argument.
 
 All three services can be started in the background simultaneously (`all` command), with PID files tracked in the project root (`.web.pid`, `.frontend.pid`, `.emulator.pid`). The `stop` command kills them all.
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Commands
 
@@ -33,6 +66,9 @@ All three services can be started in the background simultaneously (`all` comman
 | `docker-down` | `docker compose down` |
 | `docker-logs` | `docker compose logs -f` |
 | `help`, `--help`, `-h` | Print command reference |
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Interactive menu
 
@@ -67,6 +103,9 @@ When invoked with no arguments, the script shows a numbered menu:
   q) Quit
 ```
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Environment variables
 
 | Variable | Default | Description |
@@ -74,6 +113,9 @@ When invoked with no arguments, the script shows a numbered menu:
 | `WEB_PORT` | `8000` | Django dev server port |
 | `FRONTEND_PORT` | `5173` | React Vite dev server port |
 | `EMULATOR_PORT` | `8888` | Redfish emulator port |
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Service URLs
 
@@ -84,6 +126,9 @@ When invoked with no arguments, the script shows a numbered menu:
 | Redfish emulator | `http://localhost:8888` |
 | Emulator OpenAPI docs | `http://localhost:8888/docs` |
 | Django admin | `http://localhost:8000/admin/` |
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Background service management
 
@@ -97,6 +142,9 @@ The `all` command starts all three services and writes their PIDs to:
 
 The `stop` command reads these files and sends SIGTERM to each process. `status` checks whether each PID is still alive and whether each port is listening.
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Interactive pytest runner (menu option 13)
 
 The interactive test runner (`run_tests`) scans `tests/` for `test_*.py` files, groups them by the last underscore-delimited word in the filename (the "category"), and presents a two-level menu:
@@ -105,6 +153,9 @@ The interactive test runner (`run_tests`) scans `tests/` for `test_*.py` files, 
 2. Select an individual file or run all in category
 
 Each test file runs with `uv run pytest <file> -v --no-cov` and produces a timestamped log in `log/`.
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Logging
 
@@ -119,6 +170,9 @@ All service output is tee'd to `log/`:
 | `log/pytest-sdk-<date>.log` | SDK test run |
 | `log/pytest-django-<date>.log` | Django test run |
 | `log/pytest-integration-<date>.log` | Integration test run |
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## Examples
 
@@ -145,12 +199,18 @@ All service output is tee'd to `log/`:
 WEB_PORT=9000 EMULATOR_PORT=9888 ./run-dashboard.sh all
 ```
 
+
+[↑ Back to Top](#table-of-contents)
+
 ## Exit codes
 
 | Code | Meaning |
 |------|---------|
 | 0 | Clean exit (quit from menu or command completed) |
 | 1 | Unknown command or service start failure |
+
+
+[↑ Back to Top](#table-of-contents)
 
 ## See also
 

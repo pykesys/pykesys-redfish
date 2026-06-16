@@ -8,6 +8,31 @@
 
 ## Strata
 
+### 2026-06-16 — Session 2: Full Build — SDK, Web App, Emulator, Docs, Touchscreen
+
+**Deposited**:
+- `src/pykesys_redfish/` — full SDK: RedfishClient, RedfishSession (path-prefix base URLs), resources, CLI, fleet module
+- `redfish_web/` — Django observability: hosts, inventory, alerts, scheduler apps; DRF API; APScheduler polling
+- `frontend/` — React 18 + Vite SPA: Dashboard, HostDetail, Alerts pages
+- `emulator/` — FastAPI 10-node Redfish emulator with Sim control API and 3 scenarios (healthy/degraded/critical)
+- `tests/` (27 SDK unit tests) + `tests/integration/` (33 integration tests against emulator)
+- `docker-compose.yml` + `docker-compose.ci.yml` + `Dockerfile.test`
+- `docs/quickstart.md`, `docs/architecture.md`, `docs/emulator.md`, `docs/touchscreen.md`
+- `docs/project-plan-sdk.md`, `docs/project-plan-web.md` (v0.1–v0.5 milestone plans)
+- `docs/sdk.md`, `docs/cli.md`, `docs/fleet.md`, `docs/guide-users.md`, `docs/guide-admin.md`
+- `docs/prompts.md` — prompt log created (LAW 1, previously missing)
+- TOC + BTT added to 9 docs/ files (ladder Rung 1 auto-fix)
+
+**Discovered**:
+- `session.py` path-prefix base URL is backward compatible — empty prefix leaves existing behavior unchanged
+- FastAPI TestClient bypasses corporate proxy for emulator smoke tests
+- Corporate proxy blocks all localhost TCP — integration tests need Docker-internal networking or `trust_env=False`
+- `docs/prompts.md` was missing — LAW 1 violation caught and corrected by ladder
+
+**Constitutional state**: 30 laws (LAW 0-29) + 4 META-LAWs + 6 UPs + 5 Cornerstones — unchanged
+
+---
+
 ### 2026-06-11 — Session 1: Constitutional Adoption + Bug Scan
 
 **Deposited**:
