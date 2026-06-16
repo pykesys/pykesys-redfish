@@ -44,6 +44,7 @@ A complete guide to building a C++ command-deck application for the ViewSonic TD
 - [16. Calibration and Coordinate Mapping](#16-calibration-and-coordinate-mapping)
 - [17. CMake Build System](#17-cmake-build-system)
 - [18. Troubleshooting](#18-troubleshooting)
+- [Appendix A — Acronym Glossary](#appendix-a--acronym-glossary)
 
 ---
 
@@ -1996,3 +1997,70 @@ strace -e trace=epoll_wait,read -p $(pidof command_deck) 2>&1 | head -20
 ---
 
 *References: Linux kernel input documentation (`Documentation/input/`), libevdev API docs, libinput documentation (freedesktop.org), Mesa EGL docs, DRM/KMS kernel docs, NVIDIA CUDA Programming Guide (OpenGL and Vulkan interoperability), ddcutil project documentation.*
+
+---
+
+## Appendix A — Acronym Glossary
+
+All acronyms and initialisms used in this document, in alphabetical order.
+
+| Acronym | Full Form | Context |
+|---------|-----------|---------|
+| **ABS** | Absolute | Linux input subsystem event type (`EV_ABS`); absolute-position axes such as `ABS_MT_POSITION_X` |
+| **ADC** | Analog-to-Digital Converter | The touch sensor hardware that converts physical pressure/capacitance into digital coordinates |
+| **API** | Application Programming Interface | The programmatic interface exposed by a library (libinput API, EGL API, etc.) |
+| **BGRA** | Blue-Green-Red-Alpha | A 32-bit pixel memory layout with bytes ordered B, G, R, A |
+| **bpp** | Bits Per Pixel | Color depth of a framebuffer; 32 bpp = 4 bytes per pixel (XRGB8888) |
+| **BTN** | Button | Linux input subsystem event code prefix for button/key state (`BTN_TOUCH`, `BTN_LEFT`) |
+| **CI** | Command Interface | The command half of DDC/CI; the protocol layer that sends control messages to the monitor |
+| **CPU** | Central Processing Unit | The host processor; distinguished from GPU in the CUDA interop sections |
+| **CRTC** | Cathode-Ray-Tube Controller | Legacy name for the DRM display-pipeline object that drives a physical scan-out; still used in modern DRM/KMS APIs |
+| **CUDA** | Compute Unified Device Architecture | NVIDIA's parallel computing platform and programming model for GPU-accelerated workloads |
+| **DDC** | Display Data Channel | A VESA standard communication channel between a host and a monitor, carried on the I2C bus embedded in the video cable |
+| **DDC/CI** | Display Data Channel / Command Interface | Extension of DDC that allows the host to send control commands to the monitor (brightness, contrast, input source, power) |
+| **DP** | DisplayPort | A digital display interface standard; one of the video inputs on the TD2423D |
+| **DRI** | Direct Rendering Infrastructure | The Linux kernel and userspace subsystem providing direct GPU access to userspace applications without going through the X server |
+| **DRM** | Direct Rendering Manager | The Linux kernel subsystem that manages GPU resources and display output; entry point is `/dev/dri/card*` |
+| **EGL** | Embedded Graphics Library | The Khronos native platform interface that creates rendering surfaces and connects OpenGL ES or Vulkan to the underlying windowing system (or DRM/GBM in a compositor-less setup) |
+| **epoll** | Event Poll | A Linux kernel I/O event notification facility; scalable replacement for `select()`/`poll()` used in the unified input loop |
+| **ES** | Embedded Systems | Qualifier in "OpenGL ES" (OpenGL for Embedded Systems), the subset of OpenGL used on mobile, embedded, and DRM/KMS targets |
+| **EV** | Event | Prefix for Linux input subsystem event type constants (`EV_ABS`, `EV_KEY`, `EV_SYN`, `EV_REL`) |
+| **evdev** | Event Device | The Linux kernel input event interface; raw events are read from `/dev/input/event*` nodes |
+| **FD** | File Descriptor | An integer handle returned by `open()` referencing an open kernel resource (device node, socket, etc.) |
+| **FHD** | Full High Definition | Display resolution of 1920 × 1080 pixels; the native resolution of the TD2423D |
+| **GBM** | Generic Buffer Manager | A Mesa library that allocates DRM-compatible GPU buffers for use as EGL native window surfaces |
+| **GL** | Graphics Library | Short form of OpenGL (Open Graphics Library), the cross-platform 2D/3D rendering API |
+| **GLES** | OpenGL for Embedded Systems | The embedded-profile subset of OpenGL; version 3 (GLES 3.x) is used in the EGL/KMS rendering path |
+| **GPU** | Graphics Processing Unit | The dedicated graphics and compute processor; in an NVIDIA DGX context it also runs CUDA workloads |
+| **HDMI** | High-Definition Multimedia Interface | A digital audio/video interface standard; one of the video inputs on the TD2423D |
+| **HID** | Human Interface Device | A USB device class for keyboards, mice, and touchscreens; the TD2423D touch controller is a USB HID device handled by the `hid-multitouch` kernel driver |
+| **HID-MT** | Human Interface Device — Multi-Touch | The Linux kernel driver class (`hid-multitouch.ko`) that processes multi-touch HID reports and emits evdev MT events |
+| **I2C** | Inter-Integrated Circuit | A two-wire serial communication bus; DDC/CI commands travel over the I2C bus embedded in the HDMI/DP cable, accessible on Linux via `/dev/i2c-*` |
+| **IPS** | In-Plane Switching | An LCD panel technology providing wide viewing angles and accurate color reproduction; the panel type used in the TD2423D |
+| **ioctl** | Input/Output Control | A POSIX system call for device-specific operations not covered by `read()`/`write()`; used for DRM mode-setting and I2C slave address selection |
+| **KMS** | Kernel Mode Setting | The Linux kernel mechanism that moves display mode configuration (resolution, refresh rate, framebuffer mapping) from userspace into the kernel; used together with DRM |
+| **ML** | Machine Learning | The AI/statistical modeling workloads running on NVIDIA DGX nodes; the command-deck overlays ML inference results using CUDA/GL interop |
+| **ms** | Milliseconds | Unit of time used for touch latency, tap duration thresholds, and DDC/CI command delays |
+| **MT** | Multi-Touch | The ability to track multiple simultaneous contact points; the TD2423D supports 10-point MT |
+| **nvidia-smi** | NVIDIA System Management Interface | The NVIDIA command-line utility for monitoring and managing GPU state; used to verify the correct GPU is handling the display |
+| **OS** | Operating System | The host operating system; this tutorial targets Linux |
+| **OSD** | On-Screen Display | The interactive configuration menu built into the monitor itself; DDC/CI must be enabled in the OSD before it can be used programmatically |
+| **PCAP** | Projected Capacitive | A touch sensor technology that uses a grid of capacitive electrodes behind the display glass to detect finger position; enables multi-touch and does not require stylus pressure |
+| **PID** | Product ID | The 16-bit USB product identifier within a vendor's namespace; the TD2423D touch controller is `0x9881` |
+| **RGBA** | Red-Green-Blue-Alpha | A 32-bit pixel format with bytes ordered R, G, B, A; used for OpenGL textures in the CUDA interop path |
+| **RHEL** | Red Hat Enterprise Linux | A commercial Linux distribution; referenced alongside Fedora for `dnf`-based package installation |
+| **SDL** | Simple DirectMedia Layer | A cross-platform multimedia library providing abstracted access to display, input, and audio; SDL2 is the second major version |
+| **SDL2** | Simple DirectMedia Layer version 2 | The current release of SDL; supports DRM/KMS natively via its `kmsdrm` video driver without requiring X11 or Wayland |
+| **SPSC** | Single-Producer Single-Consumer | A lock-free queue design where exactly one thread writes and one thread reads; used in the command-deck event bus for zero-contention inter-thread communication |
+| **SVD** | Singular Value Decomposition | A matrix factorization technique used in the least-squares calibration matrix computation (via `Eigen::jacobiSvd()`) |
+| **SYN** | Synchronization | The Linux input subsystem event type (`EV_SYN`) that signals the end of an event frame; `SYN_REPORT` separates complete MT contact snapshots |
+| **TD2423D** | Touch Display 2423D | ViewSonic model designation: **T**ouch **D**isplay, 24-inch panel, 23 = sub-series, D = design revision |
+| **UI** | User Interface | The visual and interactive layer of the command-deck application (panels, buttons, overlays) |
+| **USB** | Universal Serial Bus | The serial bus standard used for the TD2423D touch interface (USB 2.0 upstream connector) |
+| **udev** | Userspace Device | The Linux device manager daemon responsible for managing `/dev` nodes, applying udev rules, and populating `by-id` symlinks when devices are plugged in |
+| **VCP** | Virtual Control Panel | The DDC/CI feature code namespace; each 8-bit VCP code addresses one monitor control (e.g., `0x10` = brightness, `0x60` = input source) |
+| **VGA** | Video Graphics Array | An analog video interface standard; one of the legacy video inputs on the TD2423D |
+| **VID** | Vendor ID | The 16-bit USB vendor identifier; ViewSonic's USB VID is `0x0543` |
+| **VSync** | Vertical Synchronization | The display signal that marks the end of a video frame; DRM page-flip events and `SDL_RENDERER_PRESENTVSYNC` synchronize rendering to VSync to avoid tearing |
+| **XRGB** | Extended Red-Green-Blue | A 32-bit DRM pixel format (`DRM_FORMAT_XRGB8888`) where the high byte is unused padding (X) and the remaining three bytes are R, G, B |
+| **XOR** | eXclusive OR | A bitwise operation used in the DDC/CI packet checksum calculation |
