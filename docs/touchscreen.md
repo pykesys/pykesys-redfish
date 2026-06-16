@@ -45,6 +45,7 @@ A complete guide to building a C++ command-deck application for the ViewSonic TD
 - [17. CMake Build System](#17-cmake-build-system)
 - [18. Troubleshooting](#18-troubleshooting)
 - [Appendix A — Acronym Glossary](#appendix-a--acronym-glossary)
+- [Appendix B — Software, Drivers & Reference Links](#appendix-b--software-drivers--reference-links)
 
 ---
 
@@ -2064,3 +2065,360 @@ All acronyms and initialisms used in this document, in alphabetical order.
 | **VSync** | Vertical Synchronization | The display signal that marks the end of a video frame; DRM page-flip events and `SDL_RENDERER_PRESENTVSYNC` synchronize rendering to VSync to avoid tearing |
 | **XRGB** | Extended Red-Green-Blue | A 32-bit DRM pixel format (`DRM_FORMAT_XRGB8888`) where the high byte is unused padding (X) and the remaining three bytes are R, G, B |
 | **XOR** | eXclusive OR | A bitwise operation used in the DDC/CI packet checksum calculation |
+
+---
+
+## Appendix B — Software, Drivers & Reference Links
+
+All libraries, kernel drivers, tools, and reference documentation required or referenced by this tutorial. Organized by function.
+
+---
+
+### B.1 Display Hardware
+
+| Resource | Description | Link |
+|----------|-------------|------|
+| ViewSonic TD2423D product page | Spec sheet, datasheet PDF, firmware downloads, OSD manual | https://www.viewsonic.com/global/products/lcd/TD2423D.php |
+| ViewSonic support / drivers | Driver downloads and release notes for the TD2423D | https://www.viewsonic.com/global/service/repair.php |
+| VESA DDC/CI standard (MCCS) | Monitor Control Command Set specification defining VCP codes | https://www.vesa.org/vesa-standards/ |
+
+---
+
+### B.2 Linux Kernel — Input Subsystem & Drivers
+
+The `hid-multitouch` driver is in-tree — no download needed. Listed here for source reference.
+
+| Resource | Description | Link |
+|----------|-------------|------|
+| Linux kernel input documentation | Canonical reference for evdev, multi-touch protocol (Type A/B), event codes | https://www.kernel.org/doc/html/latest/input/ |
+| Multi-touch protocol specification | Detailed description of `ABS_MT_*` event codes, slot protocol, Type A vs B | https://www.kernel.org/doc/html/latest/input/multi-touch-protocol.html |
+| `hid-multitouch` driver source | The in-kernel driver that handles USB HID multi-touch devices including the TD2423D | https://github.com/torvalds/linux/blob/master/drivers/hid/hid-multitouch.c |
+| `evdev` driver source | The kernel-side evdev interface that exposes `/dev/input/event*` | https://github.com/torvalds/linux/blob/master/drivers/input/evdev.c |
+| Linux input event codes reference | Full listing of `EV_*`, `ABS_*`, `KEY_*`, `SYN_*` constants | https://www.kernel.org/doc/html/latest/input/event-codes.html |
+| `i2c-dev` module | Userspace I2C access for raw DDC/CI; `modprobe i2c-dev` | https://www.kernel.org/doc/html/latest/i2c/dev-interface.html |
+| DRM/KMS kernel documentation | Connector, CRTC, plane, atomic modesetting internals | https://www.kernel.org/doc/html/latest/gpu/drm-kms.html |
+
+**Package installation:**
+```bash
+# Headers for evdev ioctls and input_event struct
+sudo apt-get install linux-headers-$(uname -r)
+# Enable I2C userspace access
+sudo modprobe i2c-dev
+```
+
+---
+
+### B.3 Input Libraries
+
+#### libevdev
+
+Thin, officially recommended C wrapper around the raw evdev kernel interface.
+
+| Resource | Link |
+|----------|------|
+| Project homepage | https://www.freedesktop.org/wiki/Software/libevdev/ |
+| Source repository (GitLab) | https://gitlab.freedesktop.org/libevdev/libevdev |
+| API documentation | https://www.freedesktop.org/software/libevdev/doc/latest/ |
+
+```bash
+sudo apt-get install libevdev-dev        # Ubuntu/Debian
+sudo dnf install libevdev-devel          # Fedora/RHEL
+```
+
+#### libinput
+
+Higher-level input handling library with palm rejection, calibration, and built-in gesture recognition. The recommended path for most applications.
+
+| Resource | Link |
+|----------|------|
+| Documentation (latest) | https://wayland.freedesktop.org/libinput/doc/latest/ |
+| Touch event API | https://wayland.freedesktop.org/libinput/doc/latest/api/group__touch.html |
+| Gesture event API | https://wayland.freedesktop.org/libinput/doc/latest/api/group__gestures.html |
+| Context creation API | https://wayland.freedesktop.org/libinput/doc/latest/api/group__context.html |
+| Calibration matrix | https://wayland.freedesktop.org/libinput/doc/latest/api/group__config.html |
+| udev device configuration | https://wayland.freedesktop.org/libinput/doc/latest/device-configuration-via-udev.html |
+| Palm detection | https://wayland.freedesktop.org/libinput/doc/latest/palm-detection.html |
+| Source repository (GitLab) | https://gitlab.freedesktop.org/libinput/libinput |
+
+```bash
+sudo apt-get install libinput-dev libudev-dev    # Ubuntu/Debian
+sudo dnf install libinput-devel libudev-devel     # Fedora/RHEL
+```
+
+#### libudev
+
+The udev client library; required by libinput for seat-based device discovery.
+
+| Resource | Link |
+|----------|------|
+| systemd/udev project | https://systemd.io/ |
+| libudev API reference | https://www.freedesktop.org/software/systemd/man/latest/libudev.html |
+
+```bash
+sudo apt-get install libudev-dev
+```
+
+---
+
+### B.4 Display Output — DRM/KMS & Graphics
+
+#### libdrm
+
+Userspace bindings for the Linux Direct Rendering Manager kernel subsystem.
+
+| Resource | Link |
+|----------|------|
+| Mesa DRM repository | https://gitlab.freedesktop.org/mesa/drm |
+| DRM howto (David Herrmann) | https://github.com/dvdhrm/docs/tree/master/drm-howto |
+| DRM/KMS kernel docs | https://www.kernel.org/doc/html/latest/gpu/drm-kms.html |
+| `xf86drm.h` / `xf86drmMode.h` headers | Included with `libdrm-dev` |
+
+```bash
+sudo apt-get install libdrm-dev          # Ubuntu/Debian
+sudo dnf install libdrm-devel            # Fedora/RHEL
+```
+
+#### GBM (Generic Buffer Manager)
+
+Allocates DRM-compatible GPU buffers for use as EGL native window surfaces. Ships with Mesa.
+
+| Resource | Link |
+|----------|------|
+| Mesa project (GBM is part of Mesa) | https://mesa3d.org/ |
+| Mesa source repository | https://gitlab.freedesktop.org/mesa/mesa |
+| `kmscube` — minimal EGL/KMS/GBM example | https://gitlab.freedesktop.org/mesa/kmscube |
+
+```bash
+sudo apt-get install libgbm-dev          # Ubuntu/Debian
+sudo dnf install mesa-libgbm-devel       # Fedora/RHEL
+```
+
+#### EGL
+
+The Khronos native platform interface connecting OpenGL ES to DRM/GBM. Ships with Mesa or the NVIDIA driver stack.
+
+| Resource | Link |
+|----------|------|
+| EGL specification (Khronos) | https://registry.khronos.org/EGL/ |
+| EGL reference pages | https://registry.khronos.org/EGL/sdk/docs/man/ |
+| Mesa EGL documentation | https://docs.mesa3d.org/egl.html |
+| Khronos EGL registry | https://registry.khronos.org/EGL/api/EGL/ |
+
+```bash
+sudo apt-get install libegl-dev libgles2-mesa-dev   # Ubuntu/Debian (Mesa)
+# NVIDIA: EGL ships with the NVIDIA proprietary driver package
+```
+
+#### OpenGL ES 3 (GLES 3)
+
+The embedded-profile OpenGL used for the command-deck rendering path.
+
+| Resource | Link |
+|----------|------|
+| OpenGL ES 3.x specification (Khronos) | https://registry.khronos.org/OpenGL/index_es.php |
+| GLES 3.0 reference pages | https://registry.khronos.org/OpenGL-Refpages/es3/ |
+| Mesa OpenGL ES support matrix | https://docs.mesa3d.org/systems.html |
+
+#### SDL2
+
+Optional higher-level alternative to raw DRM/KMS; handles display, input, and audio.
+
+| Resource | Link |
+|----------|------|
+| SDL2 official website | https://www.libsdl.org/ |
+| SDL2 source repository | https://github.com/libsdl-org/SDL |
+| SDL2 touch event documentation | https://wiki.libsdl.org/SDL2/SDL_TouchFingerEvent |
+| SDL2 KMS/DRM backend | https://wiki.libsdl.org/SDL2/README/kmsdrm |
+| SDL2 multi-gesture event | https://wiki.libsdl.org/SDL2/SDL_MultiGestureEvent |
+
+```bash
+sudo apt-get install libsdl2-dev         # Ubuntu/Debian
+sudo dnf install SDL2-devel              # Fedora/RHEL
+```
+
+---
+
+### B.5 Monitor Control — DDC/CI
+
+#### ddcutil
+
+The standard Linux tool and C library for DDC/CI monitor control.
+
+| Resource | Link |
+|----------|------|
+| Project website | https://www.ddcutil.com/ |
+| C API reference | https://www.ddcutil.com/api_main/ |
+| VCP feature codes reference | https://www.ddcutil.com/vcp_feature_codes/ |
+| Source repository (GitHub) | https://github.com/rockowitz/ddcutil |
+| i2c-dev prerequisites | https://www.ddcutil.com/i2c_permissions/ |
+
+```bash
+sudo apt-get install ddcutil libddcutil-dev   # Ubuntu/Debian
+sudo dnf install ddcutil ddcutil-devel        # Fedora/RHEL
+```
+
+---
+
+### B.6 CUDA & NVIDIA GPU
+
+#### CUDA Toolkit
+
+Required for the CUDA/OpenGL and CUDA/Vulkan interop sections.
+
+| Resource | Link |
+|----------|------|
+| CUDA Toolkit download | https://developer.nvidia.com/cuda-downloads |
+| CUDA C++ Programming Guide | https://docs.nvidia.com/cuda/cuda-c-programming-guide/ |
+| OpenGL interoperability | https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#opengl-interoperability |
+| Vulkan interoperability | https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#vulkan-interoperability |
+| CUDA Runtime API reference | https://docs.nvidia.com/cuda/cuda-runtime-api/ |
+| `cudaGraphicsGLRegisterImage` | https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__INTEROP.html |
+| CUDA samples (vulkanCUDA) | https://github.com/NVIDIA/cuda-samples/tree/master/Samples/5_Domain_Specific/vulkanCUDA |
+| CUDA samples (simpleGL) | https://github.com/NVIDIA/cuda-samples/tree/master/Samples/2_Concepts_and_Techniques/simpleGL |
+| EGL/CUDA interop | https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__EGL.html |
+
+#### NVIDIA Proprietary Driver
+
+Required on DGX nodes for CUDA and for NVIDIA's EGL/OpenGL implementation (Mesa will not provide CUDA interop).
+
+| Resource | Link |
+|----------|------|
+| NVIDIA driver downloads | https://www.nvidia.com/Download/index.aspx |
+| NVIDIA Linux driver documentation | https://download.nvidia.com/XFree86/Linux-x86_64/latest/README/ |
+| NVIDIA DGX OS / Base OS | https://docs.nvidia.com/dgx/dgx-os-server-release-notes/ |
+
+#### Vulkan SDK (optional — for Vulkan/CUDA interop path)
+
+| Resource | Link |
+|----------|------|
+| Vulkan SDK (LunarG) | https://vulkan.lunarg.com/sdk/home |
+| Vulkan specification | https://registry.khronos.org/vulkan/ |
+| `VK_KHR_external_memory_fd` extension | https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory_fd.html |
+| `VK_KHR_external_semaphore_fd` extension | https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_fd.html |
+
+---
+
+### B.7 Build System
+
+#### CMake
+
+| Resource | Link |
+|----------|------|
+| CMake official website | https://cmake.org/ |
+| CMake download | https://cmake.org/download/ |
+| `find_package` documentation | https://cmake.org/cmake/help/latest/command/find_package.html |
+| `pkg_check_modules` (PkgConfig) | https://cmake.org/cmake/help/latest/module/FindPkgConfig.html |
+| `FindCUDAToolkit` module | https://cmake.org/cmake/help/latest/module/FindCUDAToolkit.html |
+
+```bash
+sudo apt-get install cmake               # Ubuntu/Debian (may be outdated; prefer snap/pip for latest)
+# Or download from cmake.org/download/
+```
+
+#### pkg-config
+
+Required by CMake's `pkg_check_modules` to locate libevdev, libinput, libdrm, etc.
+
+```bash
+sudo apt-get install pkg-config          # Ubuntu/Debian
+sudo dnf install pkgconf-pkg-config      # Fedora/RHEL
+```
+
+---
+
+### B.8 Debugging & Development Tools
+
+| Tool | Description | Install | Source |
+|------|-------------|---------|--------|
+| `evtest` | Displays raw events from any `/dev/input/event*` device; essential for verifying touch is working | `sudo apt-get install evtest` | https://gitlab.freedesktop.org/libevdev/evtest |
+| `evemu-tools` | `evemu-describe` prints device capabilities and axis ranges; `evemu-record` captures event streams | `sudo apt-get install evemu-tools` | https://www.freedesktop.org/wiki/Evemu/ |
+| `libinput-tools` | `libinput debug-events`, `libinput measure`, `libinput analyze` — inspect libinput's view of devices | `sudo apt-get install libinput-tools` | https://wayland.freedesktop.org/libinput/doc/latest/tools.html |
+| `udevadm` | Inspect udev rules, trigger hotplug events, query device attributes | Ships with `systemd` | https://systemd.io/ |
+| `ddcutil` (CLI) | `ddcutil detect`, `ddcutil getvcp`, `ddcutil setvcp` — test DDC/CI without writing code | `sudo apt-get install ddcutil` | https://www.ddcutil.com/ |
+| `modetest` | Lists DRM connectors, CRTCs, encoders, and supported modes | `sudo apt-get install libdrm-tests` | https://gitlab.freedesktop.org/mesa/drm |
+| `glxinfo` / `eglinfo` | Verify OpenGL vendor and EGL extensions on the target system | `sudo apt-get install mesa-utils` | https://mesa3d.org/ |
+| `strace` | Trace system calls; used to verify epoll behavior and detect busy-polling | `sudo apt-get install strace` | https://strace.io/ |
+| `nvidia-smi` | NVIDIA GPU status and management; verify CUDA device matches display GPU | Ships with NVIDIA driver | https://developer.nvidia.com/nvidia-system-management-interface |
+| `i2cdetect` | Scan I2C bus for DDC address `0x37`; confirms DDC/CI is accessible | `sudo apt-get install i2c-tools` | https://i2c.wiki.kernel.org/index.php/I2C_Tools |
+
+---
+
+### B.9 Optional Libraries
+
+#### Eigen
+
+Required if implementing the full least-squares 4-point calibration matrix solver referenced in Section 16.
+
+| Resource | Link |
+|----------|------|
+| Eigen project website | https://eigen.tuxfamily.org/ |
+| `jacobiSvd` documentation | https://eigen.tuxfamily.org/dox/classEigen_1_1JacobiSVD.html |
+| Source repository | https://gitlab.com/libeigen/eigen |
+
+```bash
+sudo apt-get install libeigen3-dev       # Ubuntu/Debian
+sudo dnf install eigen3-devel            # Fedora/RHEL
+```
+
+#### libinput-dev calibration tools
+
+For interactive touchscreen calibration (generates the `LIBINPUT_CALIBRATION_MATRIX` values):
+
+```bash
+# libinput's built-in measurement tool
+sudo libinput measure touchpad-size --help
+
+# xinput_calibrator (legacy X11 tool; still useful for generating matrix values)
+sudo apt-get install xinput-calibrator
+```
+
+| Resource | Link |
+|----------|------|
+| `xinput_calibrator` | https://gitlab.freedesktop.org/libinput/libinput |
+| libinput calibration guide | https://wayland.freedesktop.org/libinput/doc/latest/touchscreen-support.html |
+
+---
+
+### B.10 Quick Install Reference
+
+One-shot installation of all required packages on Ubuntu/Debian:
+
+```bash
+# Input & display libraries
+sudo apt-get install \
+    libevdev-dev \
+    libinput-dev \
+    libudev-dev \
+    libdrm-dev \
+    libgbm-dev \
+    libegl-dev \
+    libgles2-mesa-dev \
+    libddcutil-dev \
+    libsdl2-dev \
+    libeigen3-dev
+
+# Build tools
+sudo apt-get install \
+    cmake \
+    pkg-config \
+    build-essential
+
+# Debugging & development tools
+sudo apt-get install \
+    evtest \
+    evemu-tools \
+    libinput-tools \
+    libdrm-tests \
+    mesa-utils \
+    i2c-tools \
+    ddcutil \
+    strace
+
+# Kernel I2C access for DDC/CI
+sudo modprobe i2c-dev
+echo "i2c-dev" | sudo tee /etc/modules-load.d/i2c-dev.conf
+```
+
+On Fedora/RHEL, replace `apt-get install` with `dnf install` and use the `-devel` suffix for development packages (e.g., `libevdev-devel`, `libinput-devel`).
+
+The NVIDIA driver and CUDA Toolkit must be installed separately from the NVIDIA developer portal; they are not available through standard distribution repositories on DGX systems.
