@@ -16,6 +16,7 @@ This project is intended to create an observability and control application to f
 - [Emulator Sim API](#emulator-sim-api-inject-test-scenarios)
 - [Constitutional Governance](#constitutional-governance)
 - [Environment Variables](#environment-variables)
+- [Appendix — uv](#appendix--uv)
 
 ---
 
@@ -54,7 +55,9 @@ pykesys-redfish/
 
 | Document | Description |
 |----------|-------------|
+| [docs/quickstart.md](docs/quickstart.md) | **Quick start** — Docker Compose walkthrough: build, start, verify, sim scenarios, CLI, add real hosts |
 | [docs/architecture.md](docs/architecture.md) | Full system architecture — component diagrams, data flow, deployment topologies, security |
+| [docs/touchscreen.md](docs/touchscreen.md) | **C++ touchscreen tutorial** — ViewSonic TD2423D on Linux: evdev MT protocol, libinput, gesture recognition, DRM/KMS, EGL/OpenGL, DDC/CI, CUDA interop, CMake |
 | [docs/redfish.md](docs/redfish.md) | Redfish protocol overview — resource model, OData, transport, vendor implementations |
 | [docs/sdk.md](docs/sdk.md) | SDK full reference — RedfishClient, all resource classes, FleetManager, exceptions, auth modes, path-prefix URLs, error handling patterns, recipes |
 | [docs/cli.md](docs/cli.md) | `rf` CLI command reference — all subcommands with examples |
@@ -62,6 +65,7 @@ pykesys-redfish/
 | [docs/emulator.md](docs/emulator.md) | Emulator guide — architecture, node defaults, Redfish coverage, Sim API, scenarios |
 | [docs/guide-users.md](docs/guide-users.md) | User guide — web dashboard, REST API, `rf` CLI, Python SDK, curl-based Redfish operations, scripting patterns |
 | [docs/guide-admin.md](docs/guide-admin.md) | Admin guide — web app deployment, BMC host management, alert rules, APScheduler, security hardening, firmware lifecycle, LDAP, vendor notes |
+| [docs/guide-bmc-images.md](docs/guide-bmc-images.md) | NVIDIA DGX BMC deep-dive — NOR flash layout, filesystem layers, A/B bank updates, ERoT, PLDM, secure boot chain |
 | [docs/project-plan-sdk.md](docs/project-plan-sdk.md) | SDK project plan — v0.1 delivered + milestones v0.2–v0.5 |
 | [docs/project-plan-web.md](docs/project-plan-web.md) | Web app project plan — v0.1 delivered + milestones v0.2–v0.5 |
 
@@ -150,16 +154,25 @@ NUM_NODES=10 uvicorn main:app --port 8888 --reload
 
 ## Docker — Full Stack
 
+> **See [docs/quickstart.md](docs/quickstart.md) for the complete walkthrough** — prerequisites, build steps, verifying the stack, injecting scenarios, creating alert rules, and common compose operations.
+
 ```bash
+# Build the React SPA first (one-time)
+cd frontend && npm install && npm run build && cd ..
+
 # Start emulator + Django web app
 docker compose up
-
-# Django API + SPA:  http://localhost:8000
-# Emulator API:      http://localhost:8888
-# Emulator Docs:     http://localhost:8888/docs
 ```
 
-The web app auto-registers 10 emulator nodes as BMCHost records on startup. The fleet dashboard immediately shows all 10 nodes.
+| URL | What's there |
+|-----|-------------|
+| `http://localhost:8000` | Fleet dashboard (React SPA) |
+| `http://localhost:8000/api/fleet/` | Fleet summary JSON |
+| `http://localhost:8888` | Redfish emulator (10 nodes) |
+| `http://localhost:8888/docs` | Emulator OpenAPI / Swagger UI |
+| `http://localhost:8888/sim/nodes/` | Emulator node state |
+
+The web app auto-registers 10 emulator nodes as BMCHost records on startup and begins polling them immediately.
 
 [↑ Back to Top](#table-of-contents)
 
@@ -366,5 +379,173 @@ Then run `/lineage-setup daughter` in Claude Code to complete the setup.
 | `NUM_NODES` | Number of virtual BMC nodes (default: `10`) |
 | `ADMIN_USER` | Admin username for all nodes (default: `admin`) |
 | `ADMIN_PASS` | Admin password for all nodes (default: `redfish`) |
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+## Appendix — uv
+
+### What is uv?
+
+`uv` is a Python package and project manager written in Rust, developed by [Astral](https://astral.sh) (the team behind the Ruff linter). It is a single binary that replaces the entire classic Python toolchain:
+
+| Classic tool | uv equivalent |
+|-------------|--------------|
+| `pip` | `uv pip install` |
+| `pip-tools` / `pip-compile` | `uv lock` / `uv sync` |
+| `virtualenv` / `venv` | automatic (managed per-project) |
+| `pyenv` | `uv python install` |
+| `twine` | `uv publish` |
+
+**Why it matters:** uv resolves and installs packages in a fraction of the time pip takes — typically 10–100× faster — because its resolver and downloader are fully parallelized and written in Rust. Cold installs that take 30 seconds with pip often complete in under 2 seconds with uv.
+
+This project uses uv as the primary Python toolchain. The `uv.lock` file at the repo root is the fully-resolved, reproducible lock of all dependencies.
+
+### Installing uv
+
+```bash
+# macOS / Linux (recommended)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# macOS via Homebrew
+brew install uv
+
+# pip (if you must bootstrap from pip)
+pip install uv
+
+# Verify
+uv --version
+```
+
+uv installs as a single self-contained binary. No Python required to install uv itself.
+
+### How uv is used in this project
+
+#### pyproject.toml — project definition
+
+```toml
+[project]
+name = "pykesys-redfish"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.27",
+    "typer>=0.12",
+    "rich>=13",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov",
+    "respx>=0.21",
+]
+
+[project.scripts]
+rf = "pykesys_redfish.cli.main:app"
+
+[[tool.uv.index]]
+url = "https://pypi.apple.com/simple"
+default = true
+```
+
+uv reads `pyproject.toml` for all project metadata, dependencies, and index configuration.
+
+#### uv.lock — reproducible lock file
+
+`uv.lock` contains the fully-resolved dependency graph with exact versions and hashes for every package. It is committed to the repo and ensures every developer and CI run uses identical package versions.
+
+Unlike `requirements.txt`, `uv.lock` is generated automatically and should never be edited by hand.
+
+#### Key commands
+
+```bash
+# Install all dependencies (including dev extras) into a managed virtualenv
+uv sync --extra dev
+
+# Install only production dependencies
+uv sync
+
+# Run a command inside the project's virtualenv — no activation needed
+uv run pytest
+uv run rf --help
+uv run python -c "import pykesys_redfish; print(pykesys_redfish.__version__)"
+
+# Add a new runtime dependency
+uv add httpx
+
+# Add a dev-only dependency
+uv add --dev black
+
+# Remove a dependency
+uv remove httpx
+
+# Update all packages to latest compatible versions and regenerate lock
+uv lock --upgrade
+
+# Update a single package
+uv lock --upgrade-package httpx
+
+# Show the current environment
+uv pip list
+uv pip show httpx
+```
+
+#### The managed virtualenv
+
+`uv sync` creates a `.venv/` directory at the project root. `uv run` automatically uses it — you never need to `source .venv/bin/activate`. If you prefer to activate it explicitly:
+
+```bash
+source .venv/bin/activate     # macOS / Linux
+.venv\Scripts\activate        # Windows
+```
+
+#### Common workflows
+
+```bash
+# Fresh checkout — get everything ready in one command
+git clone <repo>
+cd pykesys-redfish
+uv sync --extra dev
+
+# Run the test suite
+uv run pytest
+
+# Run the CLI
+uv run rf --help
+export RF_HOST=http://localhost:8888/bmc/1
+uv run rf info
+
+# Add a dependency and commit the updated lock
+uv add pydantic
+git add pyproject.toml uv.lock
+git commit -m "add pydantic dependency"
+
+# Check for outdated packages
+uv pip list --outdated
+
+# Recreate virtualenv from scratch (if .venv is corrupted)
+rm -rf .venv
+uv sync --extra dev
+```
+
+### uv vs. pip — practical differences
+
+| Task | pip | uv |
+|------|-----|----|
+| Install from requirements | `pip install -r requirements.txt` | `uv pip install -r requirements.txt` |
+| Install project + dev deps | `pip install -e .[dev]` | `uv sync --extra dev` |
+| Run a command in venv | `source .venv/bin/activate && pytest` | `uv run pytest` |
+| Generate a lock file | `pip-compile` | `uv lock` |
+| Install from lock file | `pip-sync` | `uv sync` |
+| Add a dependency | Edit `requirements.txt`, `pip install` | `uv add <pkg>` |
+
+`uv run <cmd>` is the idiomatic replacement for activating the venv and running a command. All scripts and CI in this project use `uv run`.
+
+### Further reading
+
+- uv documentation: `https://docs.astral.sh/uv/`
+- uv GitHub: `https://github.com/astral-sh/uv`
+- pyproject.toml spec: `https://packaging.python.org/en/latest/specifications/pyproject-toml/`
 
 [↑ Back to Top](#table-of-contents)
