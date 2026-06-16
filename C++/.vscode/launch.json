@@ -1,0 +1,39 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "CommandDeck (Debug, gdb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build-debug/command_deck",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "preLaunchTask": "build-debug",
+            "setupCommands": [
+                { "text": "set print pretty on" },
+                { "text": "set print array on" }
+            ]
+        },
+        {
+            "name": "CommandDeck (Debug, cuda-gdb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build-cuda/command_deck",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                { "name": "CUDA_VISIBLE_DEVICES", "value": "0" }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/local/cuda/bin/cuda-gdb",
+            "preLaunchTask": "build-cuda"
+        }
+    ]
+}

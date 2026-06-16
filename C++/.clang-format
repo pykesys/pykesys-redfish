@@ -1,0 +1,30 @@
+---
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 100
+AccessModifierOffset: -4
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations: Consecutive
+AlignTrailingComments: true
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Never
+BraceWrapping:
+  AfterFunction: false
+  AfterClass: false
+BreakBeforeBraces: Attach
+PointerAlignment: Left
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: "^<(cuda|cuda_runtime)"
+    Priority: 3
+  - Regex: "^<(EGL|GLES3|GL/gl)"
+    Priority: 2
+  - Regex: "^<(xf86drm|libevdev|libinput)"
+    Priority: 1
+  - Regex: "^<"
+    Priority: 0
+  - Regex: "^\""
+    Priority: -1
+SpaceBeforeParens: ControlStatements
+SpacesInAngles: false

@@ -32,6 +32,20 @@ pykesys-redfish/
 │   ├── cli/                 `rf` CLI (Typer + Rich)
 │   └── fleet/               FleetManager for concurrent multi-BMC operations
 ├── redfish_web/             Django 4.2 observability web app
+├── frontend/                React 18 + Vite SPA
+├── emulator/                Redfish BMC emulator (FastAPI, 10 virtual nodes)
+├── C++/                     C++ command-deck application (CMake + build scripts)
+│   ├── CMakeLists.txt       Build definition (CUDA, SDL2, DDC/CI feature gates)
+│   ├── Makefile             Convenience targets: make debug, cuda, full, asan…
+│   ├── scripts/             setup-dev.sh, check-deps.sh, build.sh, install-cuda.sh
+│   ├── src/                 Source skeleton: input, gesture, display, DDC, CUDA
+│   └── .vscode/             VSCode tasks, launch configs, clangd settings
+├── tests/                   SDK unit tests (pytest + respx)
+├── tests/integration/       Integration tests against the live emulator
+├── docker-compose.yml       Full stack: emulator + Django web app
+└── docs/                    All documentation
+│   └── fleet/               FleetManager for concurrent multi-BMC operations
+├── redfish_web/             Django 4.2 observability web app
 │   ├── hosts/               BMC host registry + CRUD
 │   ├── inventory/           Snapshot, sensor, and log storage
 │   ├── alerts/              Alert rules, events, and Slack notifications

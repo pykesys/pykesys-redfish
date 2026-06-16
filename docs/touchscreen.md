@@ -49,6 +49,7 @@ A complete guide to building a C++ command-deck application for the ViewSonic TD
 - [18. Troubleshooting](#18-troubleshooting)
 - [Appendix A — Acronym Glossary](#appendix-a--acronym-glossary)
 - [Appendix B — Software, Drivers & Reference Links](#appendix-b--software-drivers--reference-links)
+- [Appendix C — Development Environment Setup (`./C++`)](#appendix-c--development-environment-setup-c)
 
 ---
 
@@ -2485,3 +2486,477 @@ echo "i2c-dev" | sudo tee /etc/modules-load.d/i2c-dev.conf
 On Fedora/RHEL, replace `apt-get install` with `dnf install` and use the `-devel` suffix for development packages (e.g., `libevdev-devel`, `libinput-devel`).
 
 The NVIDIA driver and CUDA Toolkit must be installed separately from the NVIDIA developer portal; they are not available through standard distribution repositories on DGX systems.
+
+---
+
+## Appendix C — Development Environment Setup (`./C++`)
+
+The `C++/` directory at the repo root contains the complete build system, helper scripts, IDE configuration, and source skeleton for the CommandDeck application.
+
+### Table of Contents (Appendix C)
+
+- [C.1 Directory Layout](#c1-directory-layout)
+- [C.2 Prerequisites](#c2-prerequisites)
+- [C.3 One-time Setup](#c3-one-time-setup)
+- [C.4 Building](#c4-building)
+- [C.5 CMake Options Reference](#c5-cmake-options-reference)
+- [C.6 Makefile Targets](#c6-makefile-targets)
+- [C.7 Helper Scripts](#c7-helper-scripts)
+- [C.8 CUDA Toolkit Installation](#c8-cuda-toolkit-installation)
+- [C.9 IDE Setup — VSCode](#c9-ide-setup--vscode)
+- [C.10 IDE Setup — CLion / Other](#c10-ide-setup--clion--other)
+- [C.11 Code Style](#c11-code-style)
+- [C.12 Debugging](#c12-debugging)
+- [C.13 Static Analysis and Sanitizers](#c13-static-analysis-and-sanitizers)
+
+---
+
+### C.1 Directory Layout
+
+```
+C++/
+├── CMakeLists.txt         CMake build definition (all options, feature gates)
+├── Makefile               Convenience wrapper — human-facing targets
+├── README.md              Quick-start for this subdirectory
+├── .clang-format          Code style (LLVM base, 4-space, 100-col limit)
+├── .clangd                Language server config (compile_commands.json path)
+├── scripts/
+│   ├── setup-dev.sh       Install all system packages (apt + dnf)
+│   ├── check-deps.sh      Verify installed deps, print status table
+│   ├── build.sh           Scriptable build with all options as flags
+│   └── install-cuda.sh    Guided CUDA Toolkit + NVIDIA driver installer
+├── src/
+│   ├── main.cpp           Entry point
+│   ├── input_loop.cpp     epoll-based unified touch + keyboard loop
+│   ├── mt_tracker.cpp     Multi-touch Type B (slot/tracking-ID) tracker
+│   ├── gesture/
+│   │   ├── tap.cpp        Single/double tap detector
+│   │   ├── swipe.cpp      Directional swipe detector
+│   │   └── pinch.cpp      Pinch-to-zoom scale detector
+│   ├── display/
+│   │   ├── drm_device.cpp DRM/KMS device wrapper + mode setting
+│   │   └── egl_context.cpp EGL + GBM surface for OpenGL ES 3
+│   ├── ddc/
+│   │   └── ddc_control.cpp DDC/CI brightness, contrast, input source
+│   └── cuda/
+│       └── cuda_gl_interop.cu CUDA→OpenGL texture pipeline
+├── include/               Project header files
+└── .vscode/
+    ├── settings.json      clangd, CMake config, CUDA env vars
+    ├── launch.json        gdb + cuda-gdb debug configurations
+    └── tasks.json         Build tasks mapped to Makefile targets
+```
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.2 Prerequisites
+
+| Requirement | Minimum | Notes |
+|-------------|---------|-------|
+| Linux kernel | 5.15+ | For modern DRM/KMS atomic modesetting |
+| GCC or Clang | GCC 11 / Clang 14 | C++20 required |
+| CMake | 3.20 | For `FindCUDAToolkit`, `target_compile_options` generator expressions |
+| pkg-config | any | Locates libevdev, libdrm, EGL, etc. |
+| NVIDIA driver | 525+ | Only for `ENABLE_CUDA=ON` |
+| CUDA Toolkit | 12.0+ | Only for `ENABLE_CUDA=ON` |
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.3 One-time Setup
+
+```bash
+# From the repo root
+sudo bash C++/scripts/setup-dev.sh
+```
+
+This script:
+1. Detects your package manager (apt or dnf)
+2. Installs all required and optional library packages
+3. Loads the `i2c-dev` kernel module and makes it persistent
+4. Adds your user to the `input` and `video` groups
+5. Checks your CMake version and warns if below 3.20
+6. Reports CUDA status
+
+After running, **log out and back in** to activate the `input`/`video` group membership, then verify:
+
+```bash
+make check-deps
+```
+
+You should see all required deps as green `✓`. Optional deps (`ddcutil`, `sdl2`, `eigen3`, CUDA) show yellow `!` if missing — they are only needed for specific build targets.
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.4 Building
+
+All build commands run from the `C++/` directory:
+
+```bash
+cd C++/
+
+# Standard release build
+make
+
+# The binary lands at: build/command_deck
+sudo ./build/command_deck
+```
+
+**Debug build** (with symbols, no optimization):
+```bash
+make debug
+sudo ./build-debug/command_deck
+```
+
+**With CUDA overlay support:**
+```bash
+make cuda
+sudo ./build-cuda/command_deck
+```
+
+**Full featured** (CUDA + DDC/CI):
+```bash
+make full
+sudo ./build-full/command_deck
+```
+
+**Using the build script directly** (more control):
+```bash
+bash scripts/build.sh --type Debug --ddc --verbose
+bash scripts/build.sh --type Release --cuda --jobs 16
+bash scripts/build.sh --clean --type Release   # clean then build
+```
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.5 CMake Options Reference
+
+Pass any option via `cmake -B build -DOPTION=ON`:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `CMAKE_BUILD_TYPE` | `Release` | `Debug`, `Release`, `RelWithDebInfo` |
+| `ENABLE_CUDA` | `OFF` | CUDA/OpenGL texture interop (requires CUDA Toolkit + NVIDIA driver) |
+| `ENABLE_SDL2` | `OFF` | SDL2 display + input backend (replaces raw DRM/KMS) |
+| `ENABLE_DDCUTIL` | `OFF` | DDC/CI display control via libddcutil |
+| `ENABLE_ASAN` | `OFF` | AddressSanitizer + UBSan (forces Debug, ~2× slower) |
+| `ENABLE_TSAN` | `OFF` | ThreadSanitizer (forces Debug; incompatible with ASan) |
+
+Example — custom configure without Makefile:
+```bash
+cmake -B build \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DENABLE_CUDA=ON \
+    -DENABLE_DDCUTIL=ON \
+    -DCMAKE_VERBOSE_MAKEFILE=ON
+
+cmake --build build -j$(nproc)
+```
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.6 Makefile Targets
+
+From `C++/`:
+
+| Target | Description |
+|--------|-------------|
+| `make` / `make release` | Release build → `build/command_deck` |
+| `make debug` | Debug build → `build-debug/command_deck` |
+| `make cuda` | CUDA-enabled release → `build-cuda/command_deck` |
+| `make sdl2` | SDL2 backend release → `build-sdl2/command_deck` |
+| `make full` | CUDA + DDC/CI release → `build-full/command_deck` |
+| `make asan` | ASan debug → `build-asan/command_deck` |
+| `make run` | Build release then run with `sudo` |
+| `make run-debug` | Build debug then run with `sudo` |
+| `make clean` | Remove all build directories |
+| `make check-deps` | Print dependency status table |
+| `make format` | clang-format all `.cpp`/`.hpp`/`.cu` files in-place |
+| `make tidy` | clang-tidy static analysis (writes `clang-tidy.log`) |
+| `make help` | Print this list |
+
+Override variables:
+```bash
+make BUILD_DIR=mybuild JOBS=8
+```
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.7 Helper Scripts
+
+#### `scripts/setup-dev.sh`
+
+Install all system packages. Autodetects apt vs dnf. Safe to re-run.
+
+```bash
+sudo bash scripts/setup-dev.sh
+```
+
+#### `scripts/check-deps.sh`
+
+Verify the installed state without modifying anything. Prints a color-coded status table. Exits non-zero if any **required** dep is missing.
+
+```bash
+bash scripts/check-deps.sh
+# or via make:
+make check-deps
+```
+
+Example output:
+```
+CommandDeck — Dependency Check
+────────────────────────────────────────────────────────
+
+Build tools:
+  ✓  CMake >= 3.20               (cmake version 3.28.3)
+  ✓  C++ compiler                (g++ (Ubuntu 13.2.0) 13.2.0)
+
+Required libraries:
+  ✓  libevdev                    (libevdev 1.13.1)
+  ✓  libinput                    (libinput 1.25.0)
+  ✓  libdrm                      (libdrm 2.4.120)
+  ✓  gbm                         (gbm 23.2.1)
+  ✓  egl                         (egl 1.5)
+
+Optional libraries:
+  ✓  ddcutil (DDC/CI)            (optional — ddcutil 2.1.4)
+  !  SDL2 (alt backend)          (optional — sdl2 not found)
+
+CUDA (optional):
+  ✓  CUDA compiler (nvcc)        (release 12.5)
+  ✓  NVIDIA GPU                  (NVIDIA H100 PCIe)
+```
+
+#### `scripts/build.sh`
+
+Scriptable build — useful for CI or when you need flags not in the Makefile:
+
+```bash
+# Debug build with ASan and DDC/CI
+bash scripts/build.sh --type Debug --asan --ddc
+
+# Clean release build with CUDA, 24 jobs, verbose
+bash scripts/build.sh --clean --cuda --jobs 24 --verbose
+
+# See all options
+bash scripts/build.sh --help
+```
+
+#### `scripts/install-cuda.sh`
+
+Guided CUDA Toolkit + NVIDIA driver installer for Ubuntu/Debian. Defaults to CUDA 12.5 + driver 555. Override with environment variables:
+
+```bash
+sudo CUDA_VERSION=12.3 DRIVER_VERSION=550 bash scripts/install-cuda.sh
+```
+
+**Not needed on DGX systems** — DGX BaseOS ships CUDA and the NVIDIA driver pre-installed.
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.8 CUDA Toolkit Installation
+
+**DGX nodes (recommended path)**: CUDA is pre-installed. Verify with:
+```bash
+nvcc --version
+nvidia-smi
+```
+
+**Other NVIDIA Linux machines**: Use the install script:
+```bash
+sudo bash scripts/install-cuda.sh
+```
+
+Or install manually from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads) — choose "Linux → x86_64 → Ubuntu → 22.04 → deb (network)".
+
+After installation, ensure CUDA is on your `PATH`:
+```bash
+export CUDA_HOME=/usr/local/cuda
+export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+```
+
+Add these to `~/.bashrc` or `~/.profile` for persistence.
+
+**CMake CUDA discovery**: CMake's `FindCUDAToolkit` module finds CUDA automatically when `nvcc` is in `PATH`. If it is installed to a non-standard path:
+```bash
+cmake -B build -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.5/bin/nvcc -DENABLE_CUDA=ON
+```
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.9 IDE Setup — VSCode
+
+Install these extensions:
+- **clangd** (`llvm-vs-code-extensions.vscode-clangd`) — C++ language server; provides autocomplete, go-to-definition, inline diagnostics
+- **CMake Tools** (`ms-vscode.cmake-tools`) — CMake integration; configure/build from the status bar
+- **CUDA C++** (`nvidia.nsight-vscode-edition`) — CUDA syntax, Nsight debugger integration
+
+The `.vscode/` directory in `C++/` pre-configures all three:
+- `settings.json` — points clangd at `build/compile_commands.json`, sets CUDA `PATH` env, disables IntelliSense (clangd replaces it)
+- `tasks.json` — `Ctrl+Shift+B` runs `make release`; all Makefile targets available via "Run Task"
+- `launch.json` — `F5` launches `build-debug/command_deck` under `gdb`; second config uses `cuda-gdb`
+
+**First-time setup in VSCode:**
+
+```
+1. Open the C++/ folder:   File → Open Folder → .../pykesys-redfish/C++/
+2. Build once:             Ctrl+Shift+B  (runs make release, generates compile_commands.json)
+3. Reload clangd:          Ctrl+Shift+P → "clangd: Restart Language Server"
+4. Verify:                 open src/main.cpp — you should see type hints and completions
+```
+
+**`compile_commands.json`** is generated automatically by CMake (`CMAKE_EXPORT_COMPILE_COMMANDS=ON`) whenever you build. clangd reads it to understand include paths and compiler flags for every file in the project, including CUDA `.cu` files.
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.10 IDE Setup — CLion / Other
+
+**CLion**: Open `C++/` as a CMake project. CLion detects `CMakeLists.txt` automatically. Set CMake options under `Settings → Build, Execution, Deployment → CMake`:
+- Build type: `Debug` or `Release`
+- CMake options: `-DENABLE_CUDA=ON -DENABLE_DDCUTIL=ON`
+- Build directory: `build`
+
+**Vim/Neovim with clangd LSP**: The `.clangd` config file at `C++/.clangd` is picked up automatically by `clangd`. Build the project once (`make`) to generate `build/compile_commands.json`, then clangd will index the project on next editor open.
+
+**Emacs with `lsp-mode` or `eglot`**: Same as Neovim — build first, then clangd auto-discovers `.clangd` and `compile_commands.json`.
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.11 Code Style
+
+The `.clang-format` file enforces:
+- LLVM base style
+- 4-space indentation
+- 100-column line limit
+- Left-aligned pointer/reference (`int* p`, not `int *p`)
+- Includes sorted and grouped: CUDA → GL/EGL → DRM/evdev/libinput → standard → project
+
+Format all source files:
+```bash
+make format
+# or directly:
+clang-format -i --style=file src/**/*.cpp include/**/*.hpp
+```
+
+CI enforcement (add to your pipeline):
+```bash
+clang-format --dry-run --Werror --style=file src/**/*.cpp include/**/*.hpp
+```
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.12 Debugging
+
+#### gdb (CPU code)
+
+```bash
+make debug
+sudo gdb ./build-debug/command_deck
+```
+
+Useful gdb commands for this codebase:
+```gdb
+(gdb) set print pretty on
+(gdb) b InputLoop::run          # break on input loop start
+(gdb) b MTTracker::process      # break on each MT event
+(gdb) watch node.power_state    # break when power state changes
+(gdb) thread apply all bt        # backtrace all threads (useful for deadlocks)
+```
+
+#### cuda-gdb (CUDA kernels)
+
+```bash
+make cuda
+sudo /usr/local/cuda/bin/cuda-gdb ./build-cuda/command_deck
+```
+
+```
+(cuda-gdb) set cuda api_failures stop    # break on CUDA API errors
+(cuda-gdb) b write_heatmap               # break on CUDA kernel
+(cuda-gdb) info cuda threads             # list CUDA thread state
+(cuda-gdb) cuda thread (0,0,0) block (0,0,0)   # switch to specific thread
+```
+
+#### Valgrind (memory errors, no CUDA)
+
+```bash
+make debug
+sudo valgrind --leak-check=full --track-origins=yes ./build-debug/command_deck
+```
+
+#### AddressSanitizer (faster than Valgrind)
+
+```bash
+make asan
+sudo ./build-asan/command_deck
+# ASan reports go to stderr automatically
+```
+
+#### strace (system call trace — diagnose permission/device issues)
+
+```bash
+sudo strace -e trace=openat,ioctl,read,epoll_wait \
+    ./build/command_deck 2>&1 | head -50
+```
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### C.13 Static Analysis and Sanitizers
+
+#### clang-tidy
+
+Runs after a successful build (needs `compile_commands.json`):
+
+```bash
+make tidy
+# Output written to clang-tidy.log
+```
+
+The `.clangd` config enables these check categories:
+- `modernize-*` — C++20 idioms
+- `performance-*` — unnecessary copies, slow patterns
+- `readability-*` — naming, complexity
+- `bugprone-*` — common bug patterns
+
+Suppress a specific warning inline:
+```cpp
+// NOLINT(bugprone-easily-swappable-parameters)
+void set_boot(int slot, int tracking_id) { ... }
+```
+
+#### ThreadSanitizer (detect data races)
+
+```bash
+cmake -B build-tsan -DCMAKE_BUILD_TYPE=Debug -DENABLE_TSAN=ON
+cmake --build build-tsan -j$(nproc)
+sudo ./build-tsan/command_deck
+# TSan reports races to stderr
+```
+
+TSan is particularly useful for catching races between the `InputLoop` thread and the `RenderThread` when the SPSC event bus is not used correctly.
+
+[↑ Back to Top](#table-of-contents)

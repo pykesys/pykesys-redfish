@@ -1,0 +1,51 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build-release",
+            "type": "shell",
+            "command": "make",
+            "args": ["release"],
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": ["$gcc"],
+            "presentation": { "reveal": "silent", "panel": "shared" }
+        },
+        {
+            "label": "build-debug",
+            "type": "shell",
+            "command": "make",
+            "args": ["debug"],
+            "problemMatcher": ["$gcc"],
+            "presentation": { "reveal": "silent" }
+        },
+        {
+            "label": "build-cuda",
+            "type": "shell",
+            "command": "make",
+            "args": ["cuda"],
+            "problemMatcher": ["$gcc"],
+            "presentation": { "reveal": "silent" }
+        },
+        {
+            "label": "check-deps",
+            "type": "shell",
+            "command": "make",
+            "args": ["check-deps"],
+            "presentation": { "reveal": "always", "panel": "dedicated" }
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "make",
+            "args": ["clean"],
+            "presentation": { "reveal": "silent" }
+        },
+        {
+            "label": "format",
+            "type": "shell",
+            "command": "make",
+            "args": ["format"],
+            "presentation": { "reveal": "silent" }
+        }
+    ]
+}

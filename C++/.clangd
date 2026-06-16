@@ -1,0 +1,19 @@
+CompileFlags:
+  # Point clangd at the CMake-generated compile_commands.json
+  CompilationDatabase: build/
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      - modernize-*
+      - performance-*
+      - readability-*
+      - bugprone-*
+    Remove:
+      - modernize-use-trailing-return-type
+      - readability-magic-numbers
+
+InlayHints:
+  Enabled: true
+  ParameterNames: true
+  DeducedTypes: true
