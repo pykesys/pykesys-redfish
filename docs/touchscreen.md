@@ -10,6 +10,8 @@ A complete guide to building a C++ command-deck application for the ViewSonic TD
 ## Table of Contents
 
 - [1. Hardware Overview — ViewSonic TD2423D](#1-hardware-overview--viewsonic-td2423d)
+  - [1.1 TD24xx Model Comparison](#11-td24xx-model-comparison)
+  - [1.2 Bridge Display — ViewBoard IFP55G1](#12-bridge-display--viewboard-ifp55g1)
 - [2. Linux Input Stack Architecture](#2-linux-input-stack-architecture)
 - [3. Device Discovery and Setup](#3-device-discovery-and-setup)
 - [4. Raw evdev Programming in C++](#4-raw-evdev-programming-in-c)
@@ -67,11 +69,11 @@ The TD2423D is a 24-inch FHD industrial-grade touchscreen monitor designed for k
 | Panel | 24" IPS |
 | Resolution | 1920 × 1080 (FHD) |
 | Touch technology | 10-point projected capacitive (PCAP) |
-| Touch interface | USB 2.0 (upstream) |
+| Touch interface | USB 3.0 (upstream) |
 | Video inputs | HDMI 1.4, DisplayPort 1.2, VGA |
 | USB VID:PID (touch) | `0x0543:0x9881` (ViewSonic) |
 | Linux kernel driver | `hid-multitouch` (in-tree, no install needed) |
-| Touch area | ~527 × 296 mm |
+| Touch area | ~521 × 293 mm |
 | Response time | <25 ms touch latency |
 | OS support | Linux kernel 3.2+ (HID-MT class driver) |
 
@@ -88,6 +90,182 @@ It creates two `/dev/input/event*` nodes:
 - One for function keys on the bezel (if any)
 
 The video signal arrives separately over HDMI/DP and appears as a standard DRM/KMS connector — the display and touch are logically separate subsystems that you marry in software.
+
+---
+
+### 1.1 TD24xx Model Comparison
+
+ViewSonic sells three closely related 24" touch displays. Understanding the differences matters for hardware procurement, VESA arm selection, and application design (glove mode, anti-glare).
+
+Source: official ViewSonic user guides (`C++/refs/viewsonic/manuals/`).
+
+#### Full specification comparison
+
+| Feature | TD2423 | **TD2423D** *(this project)* | TD2465 |
+|---------|--------|------------------------------|--------|
+| **ViewSonic P/N** | VS18312 | — | VS19150 |
+| **Resolution** | 1920 × 1080 | 1920 × 1080 | 1920 × 1080 |
+| **Panel size** | 24" (23.6" viewable) | 24" (23.6" viewable) | 24" (23.6" viewable) |
+| **Pixel pitch** | 0.2715 mm | 0.2715 mm | **0.2745 mm** |
+| **Active touch area** | 521.28 × 293.22 mm | 521.28 × 293.22 mm | **527.04 × 296.46 mm** |
+| **Surface treatment** | Glossy, Haze 8%, 7H | Glossy, Haze 8%, 7H | **Anti-Glare, Haze 25%, 3H** |
+| **Video — HDMI** | 1.4 | 1.4 | ✓ |
+| **Video — DisplayPort** | ✗ | ✓ | ✓ |
+| **Video — DVI** | ✓ | ✗ | ✗ |
+| **Video — VGA** | ✓ | ✓ | ✓ |
+| **Thunderbolt** (via mini DP) | ✗ | ✓ | ✓ |
+| **USB upstream** | **USB 2.0** | **USB 3.0** | **USB 3.0** |
+| **Touch points** | 10 | 10 | 10 |
+| **Touch accuracy** | ±2 mm | ±2 mm | ±2 mm |
+| **Pen Touch mode** | ✗ | ✗ | ✓ |
+| **Glove Touch mode** | ✗ | ✗ | ✓ |
+| **Water Resistant mode** | ✗ | ✗ | ✓ |
+| **Palm rejection** | not stated | not stated | **explicitly unsupported** |
+| **Speakers** | Dual (unspecified) | Dual (unspecified) | **2 W × 2** |
+| **Power (typical)** | **18.0 W** | **14.6 W** | **24.0 W** |
+| **Power (standby)** | < 0.3 W | < 0.3 W | ≤ 0.3 W |
+| **Weight** | 5.23 kg (11.53 lb) | 5.23 kg (11.53 lb) | **5.69 kg (12.54 lb)** |
+| **VESA mount screws** | M4 × 10 mm | M4 × 10 mm | **M6 × 12 mm** |
+
+#### What changed between models
+
+**TD2423 → TD2423D** (the "D" revision — what this project targets):
+
+- **DVI replaced by DisplayPort.** DP supports higher refresh rates and works with Macs via a mini DP → DP adapter (Thunderbolt v1/v2). DVI is no longer useful on modern machines.
+- **USB upstream upgraded from 2.0 to 3.0.** Higher bandwidth for touch data and USB hub functionality. This is relevant if you chain downstream USB peripherals through the monitor.
+- **Lower power draw: 14.6 W vs 18.0 W.** The D revision is measurably more efficient — notable if you're budgeting power across a rack of monitors.
+- Everything else is identical: same panel, same glossy surface, same touch accuracy, same weight, same VESA hole pattern (M4 screws).
+
+**TD2423D → TD2465** (different product line, not a revision):
+
+- **Anti-glare surface (Haze 25%).** The TD2423 series are glossy. The TD2465 is matte. In a brightly lit room or with overhead lighting — like a data center floor or server room — the anti-glare surface is a significant ergonomic advantage. In a dark control room, glossy produces richer contrast.
+- **Pen, Glove, and Water Resistant touch modes.** Critical for rack/datacenter work where operators may wear ESD gloves. The TD2423D does not support glove input.
+- **Palm rejection explicitly unsupported** on the TD2465 — stated in the manual. Relevant if your UI involves resting a palm on the screen while touching.
+- **Heavier and draws more power** (24 W vs 14.6 W). The TD2465 is the less efficient option.
+- **Larger VESA mount screws: M6 × 12 mm** instead of M4 × 10 mm. If ordering a VESA arm or wall mount, buy the right hardware for the specific model.
+- Slightly larger active area (527 × 296 mm vs 521 × 293 mm) — negligible in practice.
+
+#### Choosing for this project
+
+The **TD2423D** is the correct target for this codebase. It has USB 3.0, DisplayPort, and is the most power-efficient of the three. The C++ code, udev rules, USB VID:PID (`0x0543:0x9881`), and calibration matrix examples in this document are all written for the TD2423D.
+
+If the display will be used in a **brightly lit environment** or by **operators wearing gloves**, the **TD2465** is worth considering — but note the different VESA screw size, the higher power draw, and the absence of palm rejection.
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+### 1.2 Bridge Display — ViewBoard IFP55G1
+
+The **IFP55G1** is a 55-inch 4K interactive flat panel from ViewSonic's ViewBoard commercial line. In a command-deck context it serves as the **bridge display** — a large wall-mounted or pedestal-mounted overview screen visible to the whole team, while individual operators use TD2423D touchscreens at their stations.
+
+Source: `C++/refs/viewsonic/manuals/ViewSonic-ViewBoard-IFP55G1.pdf` (P/N VS19763).
+
+#### Key specifications
+
+| Property | Value |
+|----------|-------|
+| Panel size | 55" (viewable) |
+| Resolution | **3840 × 2160 (UHD / 4K)** |
+| Display area | 1209.6 × 680.4 mm (47.6" × 26.8") |
+| Surface treatment | Anti-Glare, Haze 25%, Hard Coating (3H) |
+| Brightness | 350 nits (typical) |
+| Touch technology | **IR (infrared grid)** — not PCAP |
+| Touch points | **Windows OS: 40 points; Android: 20 points** |
+| Touch interface | 2× USB Type B (TOUCH 1, TOUCH 2) |
+| VESA mount | **400 × 200 mm, M8 × 25 mm × 4 screws** |
+| Weight | 26.90 kg (59.30 lb) |
+| Dimensions (W×H×D) | 1262.5 × 770 × 85.7 mm |
+| Power (on, Energy Star) | 90.23 W |
+| Power (off) | ≤ 0.5 W |
+| Speakers | **2 × 10 W** |
+| OPS expansion slot | 1× 80-pin OPS (slot-in PC) |
+
+#### Video and connectivity
+
+| Port | Quantity | Standard / Notes |
+|------|----------|-----------------|
+| HDMI | 3× (rear/side) | HDMI 2.0, HDCP 1.4/2.2, **CEC** (auto power sync), **ARC** |
+| USB-C | 1× | DP 1.2 + HDCP 1.4 + **PD 65W** + Touch + Data (USB 2.0) |
+| VGA | 1× | Analog video |
+| USB Type B (TOUCH) | **2×** (USB 3.0) | Touch-to-host; each paired with specific video inputs (see below) |
+| USB Type A (USB 3.0) | 4× (2 front, 2 side) | Peripheral / hub |
+| USB Type A (USB 2.0) | 2× (1 front, 1 rear) | Peripheral |
+| RS-232 | 1× (DSUB-9 or 3.5 mm) | Serial control: power, volume, input, brightness |
+| RJ45 (LAN-in) | 1× | 10/100/1000M — ViewBoard network + USB hub sharing |
+| RJ45 (LAN-out) | 1× | Daisy-chain network to next device |
+| Audio In | 1× (3.5 mm) | |
+| Audio Out | 1× (3.5 mm) | |
+| SPDIF | 1× (optical) | External sound system |
+| Ambient light sensor | Front panel | Auto-brightness |
+
+#### TOUCH port pairing — critical for Linux setup
+
+The IFP55G1 has **two USB-B touch ports**. Each is hardware-paired with specific video input ports. You must connect the correct TOUCH port for the active video input or touch will not respond:
+
+| TOUCH port | Paired video inputs |
+|-----------|---------------------|
+| **TOUCH 1** | HDMI 1, VGA |
+| **TOUCH 2** | HDMI 2, HDMI 3 |
+
+The USB-C port carries touch data internally over its USB 2.0 channel — no separate TOUCH cable needed when using USB-C.
+
+#### Touch technology: IR vs PCAP
+
+The IFP55G1 uses an **infrared (IR) grid** rather than projected capacitive (PCAP) as used in the TD2423D. This has practical consequences for Linux programming:
+
+| Aspect | TD2423D (PCAP) | IFP55G1 (IR) |
+|--------|----------------|--------------|
+| Touch points | 10 | 40 (Win) / 20 (Android) |
+| Linux driver | `hid-multitouch` | `hid-multitouch` (same class driver) |
+| evdev protocol | Type B (slot-based) | Type B (slot-based) |
+| Stylus | Any conductive object ≥ 3 mm | Included optical pen (passive, non-conductive ok) |
+| Palm input | Works (standard area) | Works (large area = larger MT_TOUCH_MAJOR) |
+| Wet surface | Degraded | IR unaffected by moisture |
+| Screen glare | Glossy reflection | Anti-glare coating |
+| `ABS_MT_SLOT` max | 9 (10 slots, 0-indexed) | 39 (40 slots on Windows driver) |
+
+On Linux the IR touch controller enumerates as a USB HID device and the `hid-multitouch` driver handles it with the same evdev MT Type B protocol as the TD2423D. Your `MTTracker`, `InputLoop`, and gesture recognizer code works unchanged — you just allocate more slots:
+
+```cpp
+// IFP55G1 has up to 40 touch points — resize the tracker
+MTTracker tracker(40);  // vs 10 for TD2423D
+```
+
+Coordinate normalization also works identically — the kernel reports raw ADC values with min/max from `libevdev_get_abs_info()`.
+
+#### Touch pen
+
+The IFP55G1 ships with **2× Touch Pens** and 4× replacement nibs. These are passive IR-blocking styli — they work by blocking the IR beams in the grid frame rather than by capacitive coupling. They appear to Linux as ordinary touch contacts and do not require a separate driver.
+
+#### OPS expansion slot
+
+The 80-pin OPS (Open Pluggable Specification) slot accepts a compatible slot-in PC module (e.g., ViewSonic VPC-25-O). When populated, the slot-in PC appears as an internal HDMI source and shares the display's USB hub, speakers, LAN, and touch. This allows the IFP55G1 to operate as a fully self-contained interactive workstation without an external computer.
+
+#### RS-232 control
+
+The IFP55G1 supports serial control via RS-232 (DSUB-9 male, null modem cable required). Pin assignment: RXD=2, TXD=3, GND=5. A 3.5 mm barrel adapter is included for installations where DSUB-9 clearance is limited. Controllable parameters: power on/off, volume, input selection, brightness, and more. This is relevant for the command-deck power management layer — the display can be switched and powered via the RS-232 interface independently of the touch/video connection.
+
+#### Comparison to TD2423D at a glance
+
+| | TD2423D (operator panel) | IFP55G1 (bridge display) |
+|--|--------------------------|--------------------------|
+| Role | Individual operator touchscreen | Team-facing overview display |
+| Size | 24" | 55" |
+| Resolution | 1920 × 1080 (FHD) | 3840 × 2160 (4K UHD) |
+| Touch technology | PCAP | IR grid |
+| Touch points | 10 | 40 (Windows) |
+| USB touch cable | 1× USB-B (any HDMI) | 2× USB-B (port-paired to video input) |
+| HDMI version | 1.4 | 2.0 + CEC + ARC |
+| USB-C | ✗ | ✓ DP 1.2 + 65 W PD |
+| RS-232 control | ✗ | ✓ |
+| LAN port | ✗ | ✓ (in + out, gigabit) |
+| OPS expansion | ✗ | ✓ (80-pin slot-in PC) |
+| VESA screws | M4 × 10 mm | **M8 × 25 mm** |
+| Weight | 5.23 kg | **26.90 kg** |
+| Power | 14.6 W | 90.2 W |
+
+[↑ Back to Top](#table-of-contents)
 
 ---
 
@@ -2136,15 +2314,45 @@ All acronyms and initialisms used in this document, in alphabetical order.
 
 All libraries, kernel drivers, tools, and reference documentation required or referenced by this tutorial. Organized by function.
 
+### Offline Reference Download
+
+All linked resources can be downloaded locally for offline use (air-gapped DGX nodes, etc.):
+
+```bash
+# From the repo root — download everything into C++/refs/
+cd C++
+bash scripts/download-refs.sh
+
+# Download a single section
+bash scripts/download-refs.sh --section libinput
+
+# Check what has already been downloaded
+bash scripts/download-refs.sh --check
+
+# After downloading, rewrite Appendix B links to local paths
+bash scripts/update-ref-links.sh
+
+# Preview without modifying the file
+bash scripts/update-ref-links.sh --dry-run
+
+# Restore online-only links
+bash scripts/update-ref-links.sh --restore
+```
+
+`download-refs.sh` uses `wget --mirror --convert-links` for HTML docs and `git clone --depth 1` for source repositories. It is idempotent — re-running skips already-downloaded content. Downloaded files land in `C++/refs/{kernel,libevdev,libinput,libdrm,mesa,ddcutil,sdl2,cuda,vulkan,viewsonic}/`.
+
+`update-ref-links.sh` then rewrites every URL in this appendix to point at the local copy, preserving the original URL as a fallback `[online](URL)` link. A `.bak` backup is created before any modification.
+
 ---
 
 ### B.1 Display Hardware
 
 | Resource | Description | Link |
 |----------|-------------|------|
-| ViewSonic TD2423D product page | Spec sheet, datasheet PDF, firmware downloads, OSD manual | https://www.viewsonic.com/global/products/lcd/TD2423D.php |
+| ViewSonic TD2423D product page | Spec sheet, datasheet PDF, firmware downloads, OSD manual. **URL changed** — search for TD2423D at viewsonic.com for your region | https://www.viewsonic.com/us/td2423d.html |
 | ViewSonic support / drivers | Driver downloads and release notes for the TD2423D | https://www.viewsonic.com/global/service/repair.php |
 | VESA DDC/CI standard (MCCS) | Monitor Control Command Set specification defining VCP codes | https://www.vesa.org/vesa-standards/ |
+| linux-hardware.org — TD2423D touch controller | USB 0543:9881 hardware entry. **Note: blocks automated downloads (403)** — browser access only | https://linux-hardware.org/?id=usb:0543-9881 |
 
 ---
 
@@ -2244,11 +2452,12 @@ sudo dnf install libdrm-devel            # Fedora/RHEL
 
 #### GBM (Generic Buffer Manager)
 
-Allocates DRM-compatible GPU buffers for use as EGL native window surfaces. Ships with Mesa.
+Allocates DRM-compatible GPU buffers for use as EGL native window surfaces. Ships with Mesa. GBM has no standalone HTML documentation page — the authoritative API reference is the `gbm.h` header itself.
 
 | Resource | Link |
 |----------|------|
-| Mesa project (GBM is part of Mesa) | https://mesa3d.org/ |
+| `gbm.h` API header (Mesa source) | https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/gbm/main/gbm.h |
+| Mesa project (GBM ships with Mesa) | https://mesa3d.org/ |
 | Mesa source repository | https://gitlab.freedesktop.org/mesa/mesa |
 | `kmscube` — minimal EGL/KMS/GBM example | https://gitlab.freedesktop.org/mesa/kmscube |
 
@@ -2312,7 +2521,7 @@ The standard Linux tool and C library for DDC/CI monitor control.
 |----------|------|
 | Project website | https://www.ddcutil.com/ |
 | C API reference | https://www.ddcutil.com/api_main/ |
-| VCP feature codes reference | https://www.ddcutil.com/vcp_feature_codes/ |
+| VCP feature codes | **Page removed from ddcutil.com** — generate locally: `ddcutil vcpinfo --verbose` |
 | Source repository (GitHub) | https://github.com/rockowitz/ddcutil |
 | i2c-dev prerequisites | https://www.ddcutil.com/i2c_permissions/ |
 

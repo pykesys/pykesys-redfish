@@ -16,3 +16,11 @@ htmlcov/
 junit.xml
 *.log
 .DS_Store
+
+# C++ build dirs
+C++/build*/
+C++/clang-tidy.log
+
+# Downloaded reference docs (large, generated; run: make refs to populate)
+C++/refs/*/
+!C++/refs/*/.gitkeep

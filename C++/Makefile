@@ -8,6 +8,9 @@
 #   make clean        → remove build directories
 #   make run          → build release then run
 #   make check-deps   → verify all system dependencies
+#   make refs         → download all reference documentation offline
+#   make refs-check   → check what refs are already downloaded
+#   make refs-links   → rewrite touchscreen.md links to local refs
 #   make format       → clang-format all source files
 #   make tidy         → clang-tidy static analysis
 #   make asan         → debug build with AddressSanitizer
@@ -18,7 +21,7 @@ CUDA_DIR    ?= build-cuda
 JOBS        ?= $(shell nproc)
 BINARY      := $(BUILD_DIR)/command_deck
 
-.PHONY: all release debug cuda sdl2 full clean run check-deps format tidy asan help
+.PHONY: all release debug cuda sdl2 full clean run run-debug check-deps format tidy asan refs refs-check refs-links help
 
 # ── Default target ─────────────────────────────────────────────────────────
 all: release
@@ -89,6 +92,25 @@ tidy: release
 		2>&1 | tee clang-tidy.log
 	@echo "✓ clang-tidy complete — see clang-tidy.log"
 
+# ── Reference documentation ────────────────────────────────────────────────────
+refs:
+	@bash scripts/download-refs.sh
+
+refs-section:
+	@bash scripts/download-refs.sh --section $(SECTION)
+
+refs-check:
+	@bash scripts/download-refs.sh --check
+
+refs-links:
+	@bash scripts/update-ref-links.sh
+
+refs-restore:
+	@bash scripts/update-ref-links.sh --restore
+
+refs-clean:
+	@bash scripts/download-refs.sh --clean
+
 # ── Help ───────────────────────────────────────────────────────────────────
 help:
 	@echo ""
@@ -104,6 +126,14 @@ help:
 	@echo "  make check-deps   Verify system dependencies"
 	@echo "  make format       clang-format all sources"
 	@echo "  make tidy         clang-tidy static analysis"
+	@echo ""
+	@echo "Reference documentation:"
+	@echo "  make refs         Download all reference docs offline"
+	@echo "  make refs-check   Show download status per section"
+	@echo "  make refs-links   Rewrite touchscreen.md links to local paths"
+	@echo "  make refs-restore Restore online-only links in touchscreen.md"
+	@echo "  make refs-clean   Remove all downloaded refs"
+	@echo "  SECTION=libinput make refs-section   Download one section"
 	@echo ""
 	@echo "Variables:"
 	@echo "  BUILD_DIR=<dir>   Override release build dir (default: build)"
