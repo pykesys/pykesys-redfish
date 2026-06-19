@@ -70,8 +70,9 @@ pykesys-redfish/
 | Document | Description |
 |----------|-------------|
 | [docs/quickstart.md](docs/quickstart.md) | **Quick start** — Docker Compose walkthrough: build, start, verify, sim scenarios, CLI, add real hosts |
-| [docs/architecture.md](docs/architecture.md) | Full system architecture — component diagrams, data flow, deployment topologies, security |
-| [docs/touchscreen.md](docs/touchscreen.md) | **C++ touchscreen tutorial** — ViewSonic TD2423D on Linux: evdev MT protocol, libinput, gesture recognition, DRM/KMS, EGL/OpenGL, DDC/CI, CUDA interop, CMake |
+| [docs/architecture.md](docs/architecture.md) | Full system architecture — C++ command deck, SDK, Django web, CUDA overlay, deployment topologies |
+| [docs/touchscreen.md](docs/touchscreen.md) | **C++ touchscreen tutorial** — ViewSonic TD2423D on Linux: evdev MT protocol, libinput, gesture recognition, DRM/KMS, EGL/OpenGL, DDC/CI, CUDA interop, CMake, model comparison, IFP55G1 bridge display |
+| [docs/guide-devs-touch.md](docs/guide-devs-touch.md) | **Touch developer guide** — effects→code: every visual effect traced from kernel event to rendered pixel; how to extend gestures, effects, and CUDA kernels |
 | [docs/redfish.md](docs/redfish.md) | Redfish protocol overview — resource model, OData, transport, vendor implementations |
 | [docs/sdk.md](docs/sdk.md) | SDK full reference — RedfishClient, all resource classes, FleetManager, exceptions, auth modes, path-prefix URLs, error handling patterns, recipes |
 | [docs/cli.md](docs/cli.md) | `rf` CLI command reference — all subcommands with examples |
@@ -82,6 +83,7 @@ pykesys-redfish/
 | [docs/guide-bmc-images.md](docs/guide-bmc-images.md) | NVIDIA DGX BMC deep-dive — NOR flash layout, filesystem layers, A/B bank updates, ERoT, PLDM, secure boot chain |
 | [docs/project-plan-sdk.md](docs/project-plan-sdk.md) | SDK project plan — v0.1 delivered + milestones v0.2–v0.5 |
 | [docs/project-plan-web.md](docs/project-plan-web.md) | Web app project plan — v0.1 delivered + milestones v0.2–v0.5 |
+| [docs/project-plan-cpp.md](docs/project-plan-cpp.md) | C++ command deck project plan — v0.1–v0.2 delivered + milestones v0.3–v0.5 (UI panels, Redfish integration, multi-display) |
 
 ### Scripts docs
 

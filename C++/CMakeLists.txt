@@ -49,6 +49,7 @@ set(CORE_SOURCES
     src/main.cpp
     src/input_loop.cpp
     src/mt_tracker.cpp
+    src/renderer.cpp
     src/gesture/tap.cpp
     src/gesture/swipe.cpp
     src/gesture/pinch.cpp
@@ -58,6 +59,8 @@ set(CORE_SOURCES
 )
 
 if(ENABLE_CUDA)
+  # OpenGL is required by cuda_gl_interop.h even when using OpenGL ES at runtime.
+  find_package(OpenGL REQUIRED)
   list(APPEND CORE_SOURCES src/cuda/cuda_gl_interop.cu)
 endif()
 
@@ -100,9 +103,12 @@ endif()
 
 if(ENABLE_CUDA)
   target_compile_definitions(command_deck PRIVATE HAVE_CUDA)
-  target_link_libraries(command_deck PRIVATE CUDA::cudart CUDA::cuda_driver)
+  target_include_directories(command_deck PRIVATE src/cuda)  # for colormaps.cuh
+  target_link_libraries(command_deck PRIVATE
+      CUDA::cudart CUDA::cuda_driver OpenGL::GL)
   set_target_properties(command_deck PROPERTIES
       CUDA_SEPARABLE_COMPILATION ON
+      CUDA_ARCHITECTURES "80;86;89;90"  # Ampere (A100), Ada (RTX 4090), Hopper (H100)
   )
 endif()
 

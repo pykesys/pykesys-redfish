@@ -10,11 +10,12 @@
 - [3. SDK Architecture](#3-sdk-architecture-srcpykesys_redfish)
 - [4. Django Application Architecture](#4-django-application-architecture-redfish_web)
 - [5. Frontend Architecture](#5-frontend-architecture-frontend)
-- [6. Technology Stack](#6-technology-stack)
-- [7. Key Design Decisions](#7-key-design-decisions)
-- [8. Deployment Topologies](#8-deployment-topologies)
-- [9. Security Considerations](#9-security-considerations)
-- [10. Cross-Cutting Concerns](#10-cross-cutting-concerns)
+- [6. C++ Command Deck Architecture](#6-c-command-deck-architecture-c)
+- [7. Technology Stack](#7-technology-stack)
+- [8. Key Design Decisions](#8-key-design-decisions)
+- [9. Deployment Topologies](#9-deployment-topologies)
+- [10. Security Considerations](#10-security-considerations)
+- [11. Cross-Cutting Concerns](#11-cross-cutting-concerns)
 
 ---
 
@@ -23,32 +24,35 @@
 
 ## 1. System Overview
 
-pykesys-redfish is a layered system for managing and observing server hardware via the DMTF Redfish standard. It is organized into two independently usable layers that share a common SDK core.
+pykesys-redfish is a layered system for managing and observing server hardware via the DMTF Redfish standard. It is organized into three independently usable layers that share a common SDK core.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                          OPERATORS / AUTOMATION                              │
-│          browser · scripts · CI/CD pipelines · monitoring tools             │
-└────────────┬────────────────────────────────┬───────────────────────────────┘
-             │ HTTP / REST                     │ Python import / CLI
-             ▼                                 ▼
-┌────────────────────────┐       ┌─────────────────────────────────────────┐
-│   redfish_web          │       │   pykesys_redfish (SDK)                 │
-│   Django + React SPA   │──────►│   RedfishClient · Resources · Fleet     │
-│   (observability layer)│       │   (transport layer)                     │
-└────────────────────────┘       └──────────────────┬──────────────────────┘
-                                                     │ HTTPS / Redfish REST
-             ┌───────────────────────────────────────┼──────────────────────┐
-             ▼                   ▼                   ▼                      ▼
-     ┌───────────┐       ┌───────────┐       ┌───────────┐          ┌───────────┐
-     │  iDRAC 9  │       │  iLO 5/6  │       │  OpenBMC  │    ···   │  iRMC     │
-     │  (Dell)   │       │  (HPE)    │       │  (ODM)    │          │  (Fujitsu)│
-     └───────────┘       └───────────┘       └───────────┘          └───────────┘
-             │                   │                   │
-     ┌───────────┐       ┌───────────┐       ┌───────────┐
-     │  Server   │       │  Server   │       │  Server   │
-     │  Hardware │       │  Hardware │       │  Hardware │
-     └───────────┘       └───────────┘       └───────────┘
+│                     OPERATORS / DGX FLOOR STAFF                              │
+│   touch glass · keyboard · browser · scripts · CI/CD · monitoring tools     │
+└──────┬───────────────────────────────────┬──────────────────────────────────┘
+       │ bare-metal touch                  │ HTTP / REST
+       ▼                                   ▼
+┌──────────────────────┐       ┌────────────────────────┐
+│  C++ Command Deck    │       │   redfish_web          │
+│  (C++/  directory)   │       │   Django + React SPA   │
+│                      │       │   (observability layer)│
+│  - DRM/KMS display   │       └───────────┬────────────┘
+│  - evdev 10-pt touch │                   │
+│  - OpenGL ES 3 UI    │       ┌────────────▼────────────┐
+│  - CUDA ML overlays  │──────►│   pykesys_redfish SDK   │
+│  - DDC/CI control    │       │   RedfishClient · Fleet │
+└──────────────────────┘       └───────────┬─────────────┘
+                                           │ HTTPS / Redfish REST
+                    ┌──────────────────────┼──────────────────────┐
+                    ▼                      ▼                      ▼
+             ┌───────────┐         ┌───────────┐          ┌───────────┐
+             │  iDRAC 9  │         │  iLO 5/6  │    ···   │  OpenBMC  │
+             └───────────┘         └───────────┘          └───────────┘
+                    │                      │                      │
+             ┌───────────┐         ┌───────────┐          ┌───────────┐
+             │  Server   │         │  Server   │          │  Server   │
+             └───────────┘         └───────────┘          └───────────┘
 ```
 
 ---
@@ -426,7 +430,127 @@ Production:
 
 [↑ Back to Top](#table-of-contents)
 
-## 6. Technology Stack
+## 6. C++ Command Deck Architecture (`C++/`)
+
+The C++ command deck runs directly on DGX hardware with no compositor. It is the physical operator interface: touch panels, status displays, and real-time CUDA overlays. Unlike the Django web layer (which requires a network browser), the command deck is always present on the physical console.
+
+### 6.1 Layer diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              C++ Command Deck Application                        │
+│                                                                  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────────┐  │
+│  │ InputThread  │    │ RenderThread │    │   CUDAThread     │  │
+│  │              │    │ (main)       │    │                  │  │
+│  │ epoll_wait   │    │ GL ES 3.x    │    │ Visualization    │  │
+│  │ MTTracker    │───►│ EGL/GBM/KMS  │◄───│ kernels          │  │
+│  │ Gestures     │    │ Renderer     │    │ colormap_kernel  │  │
+│  │              │    │ draw_finger  │    │ gaussian_splat   │  │
+│  └──────┬───────┘    └──────┬───────┘    │ gpu_bars_kernel  │  │
+│         │                   │            └──────────────────┘  │
+│  ┌──────▼───────────────────▼──────────────────────────────┐  │
+│  │         SPSCQueue<TouchEvent,256> + SPSCQueue<KeyEvent,64>│  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ DDCControl — brightness, input, power via DDC/CI (I2C)    │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+         │ HTTPS                        │ DRM page flip
+   pykesys_redfish SDK            TD2423D / IFP55G1 display
+```
+
+### 6.2 Input pipeline
+
+```
+/dev/input/event*                    (Linux character device)
+    │  struct input_event stream
+    ▼
+libevdev (TouchDevice)               (thin ioctl wrapper)
+    │
+    ▼
+MTTracker                            (MT Type B state machine)
+    │  per SYN_REPORT:
+    │  TouchEvent { x, y, touch_major, touch_minor, pressure }
+    ▼
+SPSCQueue<TouchEvent, 256>           (lock-free thread boundary)
+    │
+    ▼
+TouchIndicator[] update              (render thread, 60 Hz)
+    │  + TapDetector, SwipeDetector, PinchDetector (input thread)
+```
+
+### 6.3 Render pipeline
+
+```
+TouchIndicator[40]
+    │  for each active slot:
+    ▼
+draw_finger(ind, now)                (4 layers, back to front)
+    ├── draw_trail()                 comet trail (16-pt ring buffer)
+    ├── draw_ring() [if pressure]    pressure halo
+    ├── draw_ellipse(major, minor)   contact footprint
+    ├── draw_ellipse(dot)            precision centre
+    └── draw_ring() [if ripple]      DOWN burst animation
+
+draw_overlay()                       CUDA texture (if visible)
+    │  GL_TRIANGLE_STRIP / GL_TRIANGLE_FAN
+    ▼
+EGLContext::swap_and_flip()         ← cudaGraphicsUnmapResources BEFORE this
+    │  gbm_surface_lock_front_buffer
+    │  drmModePageFlip
+    │  select() blocks until vblank
+    ▼
+Display hardware (TD2423D / IFP55G1)
+```
+
+### 6.4 CUDA/GL interop
+
+```
+GL texture (overlay_tex_)            (physical GPU VRAM)
+    │
+    │  cudaGraphicsGLRegisterImage()
+    ▼
+CUDAOverlay::cuda_resource_          (CUDA handle to same memory)
+    │
+    │  Before each kernel:
+    │    cudaGraphicsMapResources()  ← GL must not read while mapped
+    │    cudaCreateSurfaceObject()
+    │
+    ▼
+CUDA kernels (colormap, density, GPU bars)
+    │  surf2Dwrite(pixel, surf, x*4, y)  ← writes pixels directly
+    │
+    │  After each kernel:
+    │    cudaGraphicsUnmapResources() ← returns ownership to GL
+    │    cudaStreamSynchronize()
+    ▼
+Renderer::draw_overlay()             (GL reads the texture, blends at 60%)
+```
+
+Zero CPU involvement in the data path. NVML → CUDA kernel → GL texture → display.
+
+### 6.5 Key design decisions specific to the C++ layer
+
+| Decision | Rationale |
+|----------|-----------|
+| Direct DRM/KMS, no compositor | Eliminates compositor latency; application owns the display; no dependency on X11/Wayland being installed |
+| Dedicated input thread + SPSC queue | GL context is bound to one thread; epoll wakes instantly on kernel delivery; SPSC gives <1μs cross-thread latency without locks |
+| Per-slot color identity | MT Type B tracking IDs increment monotonically; slot index is stable within a session — better basis for color assignment |
+| `ABS_MT_TOUCH_MAJOR` for ellipse sizing | Provides real physical contact geometry; enables palm rejection and pen vs finger distinction without a separate driver |
+| `has_abs()` guard on optional axes | Same binary works on devices that report TOUCH_MAJOR and on those that don't; graceful degradation to default radius |
+| CUDA GL interop over CPU texture upload | On DGX, training activations never leave GPU VRAM; visualization kernels run between training steps with zero PCIe traffic |
+| PCI bus ID matching for display GPU | Multi-GPU systems require the CUDA context to be on the same physical GPU as OpenGL; sysfs provides the ground truth |
+
+[↑ Back to Top](#table-of-contents)
+
+---
+
+
+[↑ Back to Top](#table-of-contents)
+
+## 7. Technology Stack
 
 | Layer | Technology | Rationale |
 |-------|-----------|-----------|
@@ -453,7 +577,7 @@ Production:
 
 [↑ Back to Top](#table-of-contents)
 
-## 7. Key Design Decisions
+## 8. Key Design Decisions
 
 ### 7.1 SDK is a dependency of the web app, not a subpackage
 
@@ -497,7 +621,7 @@ BMC credentials in `BMCHost.password` are stored as-is in the database. This is 
 
 [↑ Back to Top](#table-of-contents)
 
-## 8. Deployment Topologies
+## 9. Deployment Topologies
 
 ### 8.1 Single-Process Development
 
@@ -552,7 +676,7 @@ The SDK has no Django dependency and can be used entirely standalone.
 
 [↑ Back to Top](#table-of-contents)
 
-## 9. Security Considerations
+## 10. Security Considerations
 
 | Concern | Current State | Recommended Hardening |
 |---------|--------------|----------------------|
@@ -569,7 +693,7 @@ The SDK has no Django dependency and can be used entirely standalone.
 
 [↑ Back to Top](#table-of-contents)
 
-## 10. Cross-Cutting Concerns
+## 11. Cross-Cutting Concerns
 
 ### Logging
 
